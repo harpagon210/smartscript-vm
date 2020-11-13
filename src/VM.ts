@@ -70,17 +70,23 @@ class VM {
         return new ObjNull();
       }
       this.runtimeError('Object is not an instance of Map');
-      return new ObjNull();
+      return false;
     });
 
     mapClass.setMethod('get', (argCount: number, key: Obj) => {
       // set instance
       const instance = this.stack[this.stack.length - argCount - 1];
       if (instance instanceof ObjInstance && instance.klass.name === 'Map') {
-        return instance.getField(key.asString());
+        const name = key.asString();
+        const val = instance.getField(name);
+        if (val) {
+          return val;
+        }
+        this.runtimeError(`Undefined property '${name}'.`);
+        return false;
       }
       this.runtimeError('Object is not an instance of Map');
-      return new ObjNull();
+      return false;
     });
 
     this.setGlobal('Map', mapClass);
@@ -262,8 +268,12 @@ class VM {
       for (let index = argCount; index > 0; index -= 1) {
         this.stack.pop();
       }
-      this.push(result);
-      return true;
+      if (result !== false) {
+        this.push(result);
+        return true;
+      }
+
+      return false;
     }
 
     const method = klass.getMethod(name);
