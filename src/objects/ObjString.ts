@@ -8,7 +8,7 @@ class ObjString implements Obj {
   }
 
   asString(): string {
-    return `${this.val}`;
+    return this.val;
   }
 }
 

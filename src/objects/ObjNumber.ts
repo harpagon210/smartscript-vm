@@ -1,9 +1,10 @@
+import BigNumber from 'bignumber.js';
 import Obj from './Obj';
 
 class ObjNumber implements Obj {
-  val: number;
+  val: BigNumber;
 
-  constructor(num: number) {
+  constructor(num: BigNumber) {
     this.val = num;
   }
 

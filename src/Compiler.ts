@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js';
 import Scanner from './Scanner';
 import Parser from './Parser';
 import { disassembleChunk } from './debug';
@@ -50,13 +51,16 @@ class Compiler {
     this.rules = new Map<TokenType, Rule>();
     this.rules.set(TokenType.TokenLeftParen, new Rule('grouping', 'call', Precedence.PrecCall));
     this.rules.set(TokenType.TokenRightParen, new Rule(null, null, Precedence.PrecNone));
-    this.rules.set(TokenType.TokenLeftBrace, new Rule(null, null, Precedence.PrecNone));
+    this.rules.set(TokenType.TokenLeftBrace, new Rule('map', null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenRightBrace, new Rule(null, null, Precedence.PrecNone));
+    this.rules.set(TokenType.TokenLeftBracket, new Rule('array', 'arraySetGet', Precedence.PrecCall));
+    this.rules.set(TokenType.TokenRightBracket, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenComma, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenDot, new Rule(null, 'dot', Precedence.PrecCall));
     this.rules.set(TokenType.TokenMinus, new Rule('unary', 'binary', Precedence.PrecTerm));
     this.rules.set(TokenType.TokenPlus, new Rule(null, 'binary', Precedence.PrecTerm));
     this.rules.set(TokenType.TokenSemicolon, new Rule(null, null, Precedence.PrecNone));
+    this.rules.set(TokenType.TokenColon, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenSlash, new Rule(null, 'binary', Precedence.PrecFactor));
     this.rules.set(TokenType.TokenStar, new Rule(null, 'binary', Precedence.PrecFactor));
     this.rules.set(TokenType.TokenBang, new Rule('unary', null, Precedence.PrecNone));
@@ -153,11 +157,11 @@ class Compiler {
     return this.func.chunk;
   }
 
-  emitByte(byte: OpCode|number): void {
+  emitByte(byte: OpCode | number): void {
     this.currentChunk().write(byte, this.parser.previous.line);
   }
 
-  emitBytes(byte1: OpCode|number, byte2: OpCode|number): void {
+  emitBytes(byte1: OpCode | number, byte2: OpCode | number): void {
     this.emitByte(byte1);
     this.emitByte(byte2);
   }
@@ -297,6 +301,57 @@ class Compiler {
     this.emitBytes(OpCode.OpCall, argCount);
   }
 
+  map(): void {
+    let argCount = 0;
+
+    if (!this.check(TokenType.TokenRightBrace)) {
+      do {
+        if (this.match(TokenType.TokenIdentifier)) {
+          const value = this.parser.previous.lexeme;
+          this.emitConstant(new ObjString(value));
+        } else {
+          this.expression();
+        }
+        this.consume(TokenType.TokenColon, "Expect ':' after key.");
+        this.expression();
+        argCount += 1;
+      } while (this.match(TokenType.TokenComma));
+    }
+
+    this.consume(TokenType.TokenRightBrace, "Expect '}' after arguments.");
+
+    this.emitBytes(OpCode.OpMapInit, argCount);
+  }
+
+  arrayArgumentList(): number {
+    let argCount = 0;
+    if (!this.check(TokenType.TokenRightBracket)) {
+      do {
+        this.expression();
+        argCount += 1;
+      } while (this.match(TokenType.TokenComma));
+    }
+
+    this.consume(TokenType.TokenRightBracket, "Expect ']' after arguments.");
+    return argCount;
+  }
+
+  array(): void {
+    const argCount = this.arrayArgumentList();
+    this.emitBytes(OpCode.OpArrayInit, argCount);
+  }
+
+  arraySetGet(canAssign: boolean): void {
+    this.expression();
+    this.consume(TokenType.TokenRightBracket, "Expect ']' after arguments.");
+    if (canAssign && this.match(TokenType.TokenEqual)) {
+      this.expression();
+      this.emitByte(OpCode.OpArraySet);
+    } else {
+      this.emitByte(OpCode.OpArrayGet);
+    }
+  }
+
   superr(): void {
     if (this.currentClass === null) {
       this.error("Cannot use 'super' outside of a class.");
@@ -344,7 +399,7 @@ class Compiler {
   }
 
   number(): void {
-    const value = parseFloat(this.parser.previous.lexeme);
+    const value = new BigNumber(this.parser.previous.lexeme);
     this.emitConstant(new ObjNumber(value));
   }
 
@@ -540,7 +595,9 @@ class Compiler {
     this.patchJump(thenJump);
     this.emitByte(OpCode.OpPop);
 
-    if (this.match(TokenType.TokenElse)) this.statement();
+    if (this.match(TokenType.TokenElse)) {
+      this.statement();
+    }
     this.patchJump(elseJump);
   }
 

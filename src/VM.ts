@@ -1,4 +1,5 @@
 import { performance } from 'perf_hooks';
+import BigNumber from 'bignumber.js';
 import { disassembleInstruction } from './debug';
 import Compiler from './Compiler';
 import Scanner from './Scanner';
@@ -21,6 +22,7 @@ import ObjBool from './objects/ObjBool';
 import ObjString from './objects/ObjString';
 import ObjFunction from './objects/ObjFunction';
 import ObjUndefined from './objects/ObjUndefined';
+import ObjArray from './objects/ObjArray';
 
 const FRAMES_MAX = 11000;
 
@@ -55,9 +57,33 @@ class VM {
 
     // START NATIVE FUNCTIONS
 
-    const clock = () => new ObjNumber(performance.now());
+    const clock = () => new ObjNumber(new BigNumber(performance.now()));
 
     this.defineNative('clock', new ObjNativeFunction(clock, 'clock'));
+
+    const mapClass = new ObjNativeClass('Map');
+    mapClass.setMethod('set', (argCount: number, key: Obj, value: Obj) => {
+      // set instance
+      const instance = this.stack[this.stack.length - argCount - 1];
+      if (instance instanceof ObjInstance && instance.klass.name === 'Map') {
+        instance.setField(key.asString(), value);
+        return new ObjNull();
+      }
+      this.runtimeError('Object is not an instance of Map');
+      return new ObjNull();
+    });
+
+    mapClass.setMethod('get', (argCount: number, key: Obj) => {
+      // set instance
+      const instance = this.stack[this.stack.length - argCount - 1];
+      if (instance instanceof ObjInstance && instance.klass.name === 'Map') {
+        return instance.getField(key.asString());
+      }
+      this.runtimeError('Object is not an instance of Map');
+      return new ObjNull();
+    });
+
+    this.setGlobal('Map', mapClass);
 
     /*
     const stringClass = new ObjNativeClass('String');
@@ -82,10 +108,23 @@ class VM {
     this.benchmarks = new Map<OpCode, Array<number>>();
   }
 
-  interpret(source: string): InterpretResult {
+  static compile(source: string): ObjFunction {
     const scanner = new Scanner(source);
     const compiler = new Compiler(FunctionType.TypeScript, scanner);
     const func = compiler.compile();
+
+    return func;
+  }
+
+  interpret(source: string | ObjFunction): InterpretResult {
+    let func: ObjFunction;
+    if (source instanceof ObjFunction) {
+      func = source;
+    } else {
+      const scanner = new Scanner(source);
+      const compiler = new Compiler(FunctionType.TypeScript, scanner);
+      func = compiler.compile();
+    }
 
     if (!func) {
       return InterpretResult.InterpretCompileError;
@@ -95,7 +134,7 @@ class VM {
 
     this.push(closure);
 
-    this.frames.push(new CallFrame(closure, 0, this.stack.length));
+    this.frames.push(new CallFrame(closure, 0, 0));
 
     if (process.env.BENCHMARK === 'true') {
       const res = this.run();
@@ -144,6 +183,10 @@ class VM {
     return isNewKey;
   }
 
+  getGlobal(key: string): Obj {
+    return this.globals.get(key);
+  }
+
   binaryOp(operator: string): InterpretResult {
     if (!(this.peek(0) instanceof ObjNumber) || !(this.peek(1) instanceof ObjNumber)) {
       this.runtimeError('Operands must be numbers.');
@@ -157,22 +200,22 @@ class VM {
 
     switch (operator) {
       case '+':
-        res = a.val + b.val;
+        res = a.val.plus(b.val);
         break;
       case '-':
-        res = a.val - b.val;
+        res = a.val.minus(b.val);
         break;
       case '*':
-        res = a.val * b.val;
+        res = a.val.times(b.val);
         break;
       case '/':
-        res = a.val / b.val;
+        res = a.val.div(b.val);
         break;
       case '<':
-        res = a.val < b.val;
+        res = a.val.lt(b.val);
         break;
       case '>':
-        res = a.val > b.val;
+        res = a.val.gt(b.val);
         break;
       default:
         break;
@@ -216,7 +259,7 @@ class VM {
         return false;
       }
       const result = method(argCount, ...this.stack.slice(-argCount));
-      for (let index = argCount + 1; index >= 0; index -= 1) {
+      for (let index = argCount; index > 0; index -= 1) {
         this.stack.pop();
       }
       this.push(result);
@@ -311,9 +354,9 @@ class VM {
       const frame = this.frames[i];
       const { closure } = frame;
       const line = closure.func.chunk.lines[frame.ip];
-      if (closure.func.name === null) {
+      if (!closure.func.name) {
         // eslint-disable-next-line no-console
-        console.log(`[line ${line}] in script`);
+        console.log(`[line ${line}] in main script`);
       } else {
         // eslint-disable-next-line no-console
         console.log(`[line ${line}] in ${closure.func.name}()`);
@@ -383,7 +426,6 @@ class VM {
 
       if (process.env.DEBUG_TRACE_EXECUTION === 'true') {
         let output = '          ';
-
         for (let index = 0; index < this.stack.length; index += 1) {
           const slot = this.stack[index];
 
@@ -428,7 +470,7 @@ class VM {
           const name = frame.readConstant() as ObjString;
           const value = this.globals.get(name.val);
           if (!value) {
-            this.runtimeError(`Undefined variable ${name}`);
+            this.runtimeError(`Undefined variable ${name.val}`);
             return InterpretResult.InterpretRuntimeError;
           }
           this.push(value);
@@ -444,7 +486,7 @@ class VM {
           const name = frame.readConstant() as ObjString;
           if (this.setGlobal(name.val, this.peek(0))) {
             this.globals.delete(name.val);
-            this.runtimeError(`Undefined variable ${name}`);
+            this.runtimeError(`Undefined variable ${name.val}`);
             return InterpretResult.InterpretRuntimeError;
           }
           break;
@@ -516,9 +558,11 @@ class VM {
           let result: boolean = false;
           if (a instanceof ObjBool && b instanceof ObjBool && a.val === b.val) {
             result = true;
-          } else if (a instanceof ObjNumber && b instanceof ObjNumber && a.val === b.val) {
+          } else if (a instanceof ObjNumber && b instanceof ObjNumber && a.val.eq(b.val)) {
             result = true;
           } else if (a instanceof ObjString && b instanceof ObjString && a.val === b.val) {
+            result = true;
+          } else if (a instanceof ObjNull && b instanceof ObjNull) {
             result = true;
           }
 
@@ -536,7 +580,7 @@ class VM {
             const b = this.pop() as ObjNumber;
             const a = this.pop() as ObjNumber;
 
-            this.push(new ObjNumber(a.val + b.val));
+            this.push(new ObjNumber(a.val.plus(b.val)));
           } else {
             this.runtimeError('Operands must be two numbers or two strings.');
             return InterpretResult.InterpretRuntimeError;
@@ -573,7 +617,7 @@ class VM {
             return InterpretResult.InterpretRuntimeError;
           }
 
-          this.push(new ObjNumber((this.pop() as ObjNumber).val * -1));
+          this.push(new ObjNumber((this.pop() as ObjNumber).val.times(-1)));
           break;
         }
         case OpCode.OpPrint: {
@@ -710,6 +754,88 @@ class VM {
             return InterpretResult.InterpretRuntimeError;
           }
           frame = this.frames[this.frames.length - 1];
+          break;
+        }
+        case OpCode.OpArrayInit: {
+          const argCount = frame.readByte();
+          if (typeof argCount !== 'number') {
+            throw new Error('argCount must be a number');
+          }
+
+          const arr = new Array(argCount);
+
+          for (let index = argCount - 1; index >= 0; index -= 1) {
+            const val = this.pop();
+            arr[index] = val;
+          }
+
+          this.push(new ObjArray(arr));
+          break;
+        }
+        case OpCode.OpArraySet: {
+          const val = this.pop();
+          const arrIndex = this.pop();
+          let arrIndexNum: number = -1;
+          if (!(arrIndex instanceof ObjNumber)) {
+            this.runtimeError(`Index ${arrIndex.asString()} is not number.`);
+            return InterpretResult.InterpretRuntimeError;
+          }
+          arrIndexNum = (arrIndex as ObjNumber).val.toNumber();
+          const arr = this.pop() as ObjArray;
+
+          if (arrIndexNum < 0 || arrIndexNum > arr.length() - 1) {
+            this.runtimeError(`Out of bound ${arrIndexNum}.`);
+            return InterpretResult.InterpretRuntimeError;
+          }
+
+          arr.set(arrIndexNum, val);
+          break;
+        }
+        case OpCode.OpArrayGet: {
+          const arrIndex = this.pop();
+          let arrIndexNum: number = -1;
+          if (!(arrIndex instanceof ObjNumber)) {
+            this.runtimeError(`Index ${arrIndex.asString()} is not number.`);
+            return InterpretResult.InterpretRuntimeError;
+          }
+          arrIndexNum = (arrIndex as ObjNumber).val.toNumber();
+          const arr = this.pop() as ObjArray;
+
+          if (arrIndexNum < 0 || arrIndexNum > arr.length() - 1) {
+            this.runtimeError(`Out of bound ${arrIndexNum}.`);
+            return InterpretResult.InterpretRuntimeError;
+          }
+
+          this.push(arr.get(arrIndexNum));
+          break;
+        }
+        case OpCode.OpMapInit: {
+          const argCount = frame.readByte();
+          if (typeof argCount !== 'number') {
+            throw new Error('argCount must be a number');
+          }
+
+          // const hash = new ObjHash();
+          const mapNativeClass = this.getGlobal('Map') as ObjNativeClass;
+          const map = new ObjInstance(mapNativeClass);
+          const setFn = map.klass.getMethod('set') as Function;
+
+          const keysValues = [];
+
+          for (let index = 0; index < argCount; index += 1) {
+            // value
+            keysValues.push(this.pop());
+            // key
+            keysValues.push(this.pop());
+          }
+
+          this.push(map);
+
+          for (let index = keysValues.length - 1; index >= 0; index -= 2) {
+            const key = keysValues[index];
+            const val = keysValues[index - 1];
+            setFn(0, key, val);
+          }
           break;
         }
         default:

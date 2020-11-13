@@ -7,7 +7,10 @@ enum FunctionType {
   TypeInitializer,
 }
 
-const printObj = (obj: Obj): string => obj.asString();
+const printObj = (obj: Obj): string => {
+  // console.log(obj);
+  return obj.asString();
+};
 
 export {
   FunctionType, printObj,

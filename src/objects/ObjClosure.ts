@@ -18,6 +18,9 @@ class ObjClosure implements Obj {
   }
 
   asString(): string {
+    if (!this.func.name) {
+      return '<closure main script>';
+    }
     return `<closure ${this.func.name}>`;
   }
 }

@@ -134,7 +134,7 @@ class Scanner {
       case 'e':
         if (this.current - this.start > 1) {
           switch (this.source[this.start + 1]) {
-            case 'l': return this.checkKeyword(2, 3, 'se', TokenType.TokenElse);
+            case 'l': return this.checkKeyword(2, 2, 'se', TokenType.TokenElse);
             case 'x': return this.checkKeyword(2, 5, 'tends', TokenType.TokenExt);
             default: return TokenType.TokenIdentifier;
           }
@@ -205,7 +205,10 @@ class Scanner {
       case ')': return this.makeToken(TokenType.TokenRightParen);
       case '{': return this.makeToken(TokenType.TokenLeftBrace);
       case '}': return this.makeToken(TokenType.TokenRightBrace);
+      case '[': return this.makeToken(TokenType.TokenLeftBracket);
+      case ']': return this.makeToken(TokenType.TokenRightBracket);
       case ';': return this.makeToken(TokenType.TokenSemicolon);
+      case ':': return this.makeToken(TokenType.TokenColon);
       case ',': return this.makeToken(TokenType.TokenComma);
       case '.': return this.makeToken(TokenType.TokenDot);
       case '-': return this.makeToken(TokenType.TokenMinus);

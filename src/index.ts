@@ -1,27 +1,26 @@
+import * as fs from 'fs';
 import VM from './VM';
+import InterpretResult from './InterpretResult';
 
-process.env.DEBUG_TRACE_EXECUTION = 'tru';
+process.env.DEBUG_TRACE_EXECUTION = 'true';
 process.env.DEBUG_PRINT_CODE = 'true';
 process.env.BENCHMARK = 'tru';
 
-const code = `function fibonacci(num){
-  let a = 1;
-  let b = 0; 
-  let temp;
+const argv = process.argv.slice(2);
+if (argv.length === 1) {
+  const vm = new VM();
+  const source = fs.readFileSync(argv[0]).toString();
 
-  while (num >= 0){
-    temp = a;
-    a = a + b;
-    b = temp;
-    num = num - 1;
-  }
+  const func = VM.compile(source);
 
-  return b;
+  const result = vm.interpret(func);
+
+  if (result === InterpretResult.InterpretCompileError) process.exit(65);
+  if (result === InterpretResult.InterpretRuntimeError) process.exit(70);
+
+  process.exit();
+} else {
+  // eslint-disable-next-line no-console
+  console.error('Usage: node index.js [path]');
+  process.exit(64);
 }
-
-let start = clock();
-print(fibonacci(1000));
-print(clock() - start);`;
-
-const vm = new VM();
-vm.interpret(code);
