@@ -265,9 +265,11 @@ class VM {
         return false;
       }
       const result = method(argCount, ...this.stack.slice(-argCount));
-      for (let index = argCount; index > 0; index -= 1) {
+      // add 1 to the argCount to pop the instance as well
+      for (let index = argCount + 1; index > 0; index -= 1) {
         this.stack.pop();
       }
+
       if (result !== false) {
         this.push(result);
         return true;
