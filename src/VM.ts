@@ -63,7 +63,6 @@ class VM {
 
     const mapClass = new ObjNativeClass('Map');
     mapClass.setMethod('set', (argCount: number, key: Obj, value: Obj) => {
-      // set instance
       const instance = this.stack[this.stack.length - argCount - 1];
       if (instance instanceof ObjInstance && instance.klass.name === 'Map') {
         instance.setField(key.asString(), value);
@@ -74,7 +73,6 @@ class VM {
     });
 
     mapClass.setMethod('get', (argCount: number, key: Obj) => {
-      // set instance
       const instance = this.stack[this.stack.length - argCount - 1];
       if (instance instanceof ObjInstance && instance.klass.name === 'Map') {
         const name = key.asString();
@@ -84,6 +82,25 @@ class VM {
         }
         this.runtimeError(`Undefined property '${name}'.`);
         return false;
+      }
+      this.runtimeError('Object is not an instance of Map');
+      return false;
+    });
+
+    mapClass.setMethod('has', (argCount: number, key: Obj) => {
+      const instance = this.stack[this.stack.length - argCount - 1];
+      if (instance instanceof ObjInstance && instance.klass.name === 'Map') {
+        return new ObjBool(instance.fields.has(key.asString()));
+      }
+      this.runtimeError('Object is not an instance of Map');
+      return false;
+    });
+
+    mapClass.setMethod('clear', (argCount: number) => {
+      const instance = this.stack[this.stack.length - argCount - 1];
+      if (instance instanceof ObjInstance && instance.klass.name === 'Map') {
+        instance.fields.clear();
+        return new ObjNull();
       }
       this.runtimeError('Object is not an instance of Map');
       return false;
@@ -348,7 +365,7 @@ class VM {
 
     if (callee instanceof ObjNativeFunction) {
       const result = callee.func(argCount, ...this.stack.slice(-argCount));
-      for (let index = argCount + 1; index >= 0; index -= 1) {
+      for (let index = argCount + 1; index > 0; index -= 1) {
         this.stack.pop();
       }
       this.push(result);
