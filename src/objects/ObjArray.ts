@@ -15,6 +15,18 @@ class ObjArray implements Obj {
     return this.val[index];
   }
 
+  push(value: Obj) {
+    this.val.push(value);
+  }
+
+  pop(): Obj {
+    return this.val.pop();
+  }
+
+  clear(): void {
+    this.val = [];
+  }
+
   length(): number {
     return this.val.length;
   }
