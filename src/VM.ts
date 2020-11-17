@@ -61,6 +61,12 @@ class VM {
 
     this.defineNative('clock', new ObjNativeFunction(clock, 'clock'));
 
+    const wait = () => new Promise((resolve) => {
+      setTimeout(() => resolve(new ObjString('HOLA!')), 3000);
+    });
+
+    this.defineNative('wait', new ObjNativeFunction(wait, 'wait'));
+
     const mapClass = new ObjNativeClass('Map');
     mapClass.setMethod('set', (argCount: number, key: Obj, value: Obj) => {
       const instance = this.stack[this.stack.length - argCount - 1];
@@ -139,7 +145,7 @@ class VM {
     return func;
   }
 
-  interpret(source: string | ObjFunction): InterpretResult {
+  async interpret(source: string | ObjFunction): Promise<InterpretResult> {
     let func: ObjFunction;
     if (source instanceof ObjFunction) {
       func = source;
@@ -160,7 +166,7 @@ class VM {
     this.frames.push(new CallFrame(closure, 0, 0));
 
     if (process.env.BENCHMARK === 'true') {
-      const res = this.run();
+      const res = await this.run();
 
       this.benchmarks.forEach((vals: Array<number>, key: OpCode) => {
         const len = vals.length;
@@ -274,14 +280,15 @@ class VM {
     return true;
   }
 
-  invokeFromClass(klass: ObjClass | ObjNativeClass, name: string, argCount: number): boolean {
+  async invokeFromClass(klass: ObjClass | ObjNativeClass,
+    name: string, argCount: number): Promise<boolean> {
     if (klass instanceof ObjNativeClass) {
       const method = klass.getMethod(name);
       if (!method) {
         this.runtimeError(`Undefined property '${name}'.`);
         return false;
       }
-      const result = method(argCount, ...this.stack.slice(-argCount));
+      const result = await method(argCount, ...this.stack.slice(-argCount));
       // add 1 to the argCount to pop the instance as well
       for (let index = argCount + 1; index > 0; index -= 1) {
         this.stack.pop();
@@ -304,7 +311,7 @@ class VM {
     return this.call(method, argCount);
   }
 
-  invoke(name: string, argCount: number): boolean {
+  async invoke(name: string, argCount: number): Promise<boolean> {
     const receiver = this.peek(argCount);
     if (!(receiver instanceof ObjInstance)) {
       this.runtimeError('Only instances have methods.');
@@ -321,7 +328,7 @@ class VM {
     return this.invokeFromClass(instance.klass, name, argCount);
   }
 
-  callValue(callee: Obj, argCount: number): boolean {
+  async callValue(callee: Obj, argCount: number): Promise<boolean> {
     if (callee instanceof ObjBoundMethod) {
       this.stack[this.stack.length - argCount - 1] = callee.receiver;
       return this.call(callee.method, argCount);
@@ -331,7 +338,7 @@ class VM {
       this.stack[this.stack.length - argCount - 1] = new ObjInstance(callee);
       const initializer = callee.getMethod('constructor');
       if (initializer) {
-        const result = initializer(argCount, ...this.stack.slice(-argCount));
+        const result = await initializer(argCount, ...this.stack.slice(-argCount));
         for (let index = argCount - 1; index >= 0; index -= 1) {
           this.stack.pop();
         }
@@ -364,7 +371,7 @@ class VM {
     }
 
     if (callee instanceof ObjNativeFunction) {
-      const result = callee.func(argCount, ...this.stack.slice(-argCount));
+      const result = await callee.func(argCount, ...this.stack.slice(-argCount));
       for (let index = argCount + 1; index > 0; index -= 1) {
         this.stack.pop();
       }
@@ -448,7 +455,7 @@ class VM {
     return true;
   }
 
-  run(): InterpretResult {
+  async run(): Promise<InterpretResult> {
     for (; ;) {
       let frame = this.frames[this.frames.length - 1];
       const instruction = frame.readByte();
@@ -688,7 +695,8 @@ class VM {
           if (typeof argCount !== 'number') {
             throw new Error('offset must be a number');
           }
-          if (!this.callValue(this.peek(argCount), argCount)) {
+          // eslint-disable-next-line no-await-in-loop
+          if (!await this.callValue(this.peek(argCount), argCount)) {
             return InterpretResult.InterpretRuntimeError;
           }
           break;
@@ -766,7 +774,8 @@ class VM {
           if (typeof argCount !== 'number') {
             throw new Error('argCount must be a number');
           }
-          if (!this.invoke(method.val, argCount)) {
+          // eslint-disable-next-line no-await-in-loop
+          if (!await this.invoke(method.val, argCount)) {
             return InterpretResult.InterpretRuntimeError;
           }
           frame = this.frames[this.frames.length - 1];
@@ -779,7 +788,8 @@ class VM {
           if (typeof argCount !== 'number') {
             throw new Error('argCount must be a number');
           }
-          if (!this.invokeFromClass(superclass, method.val, argCount)) {
+          // eslint-disable-next-line no-await-in-loop
+          if (!await this.invokeFromClass(superclass, method.val, argCount)) {
             return InterpretResult.InterpretRuntimeError;
           }
           frame = this.frames[this.frames.length - 1];
@@ -844,7 +854,6 @@ class VM {
             throw new Error('argCount must be a number');
           }
 
-          // const hash = new ObjHash();
           const mapNativeClass = this.getGlobal('Map') as ObjNativeClass;
           const map = new ObjInstance(mapNativeClass);
           const setFn = map.klass.getMethod('set') as Function;
