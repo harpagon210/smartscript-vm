@@ -17,7 +17,7 @@ class Scanner {
   }
 
   isAtEnd(): boolean {
-    return this.source[this.current] === '\0' || this.source[this.current] === undefined;
+    return this.source[this.current] === '\0' || this.source[this.current] === null || this.source[this.current] === undefined;
   }
 
   makeToken(type: TokenType): Token {
@@ -106,14 +106,6 @@ class Scanner {
 
   number(): Token {
     while (Scanner.isDigit(this.peek())) this.advance();
-
-    // Look for a fractional part.
-    if (this.peek() === '.' && Scanner.isDigit(this.peekNext())) {
-      // Consume the ".".
-      this.advance();
-
-      while (Scanner.isDigit(this.peek())) this.advance();
-    }
 
     return this.makeToken(TokenType.TokenNumber);
   }

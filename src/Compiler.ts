@@ -1,4 +1,3 @@
-import BigNumber from 'bignumber.js';
 import Scanner from './Scanner';
 import Parser from './Parser';
 import { disassembleChunk } from './debug';
@@ -399,7 +398,7 @@ class Compiler {
   }
 
   number(): void {
-    const value = new BigNumber(this.parser.previous.lexeme);
+    const value = BigInt(this.parser.previous.lexeme);
     this.emitConstant(new ObjNumber(value));
   }
 

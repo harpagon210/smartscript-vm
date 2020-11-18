@@ -1,5 +1,4 @@
 import { performance } from 'perf_hooks';
-import BigNumber from 'bignumber.js';
 import { disassembleInstruction } from './debug';
 import Compiler from './Compiler';
 import Scanner from './Scanner';
@@ -57,7 +56,7 @@ class VM {
 
     // START NATIVE FUNCTIONS
 
-    const clock = () => new ObjNumber(new BigNumber(performance.now()));
+    const clock = () => new ObjNumber(BigInt(Math.round(performance.now())));
 
     this.defineNative('clock', new ObjNativeFunction(clock, 'clock'));
 
@@ -229,22 +228,22 @@ class VM {
 
     switch (operator) {
       case '+':
-        res = a.val.plus(b.val);
+        res = a.val + b.val;
         break;
       case '-':
-        res = a.val.minus(b.val);
+        res = a.val - b.val;
         break;
       case '*':
-        res = a.val.times(b.val);
+        res = a.val * b.val;
         break;
       case '/':
-        res = a.val.div(b.val);
+        res = a.val / b.val;
         break;
       case '<':
-        res = a.val.lt(b.val);
+        res = a.val < b.val;
         break;
       case '>':
-        res = a.val.gt(b.val);
+        res = a.val > b.val;
         break;
       default:
         break;
@@ -594,7 +593,7 @@ class VM {
           let result: boolean = false;
           if (a instanceof ObjBool && b instanceof ObjBool && a.val === b.val) {
             result = true;
-          } else if (a instanceof ObjNumber && b instanceof ObjNumber && a.val.eq(b.val)) {
+          } else if (a instanceof ObjNumber && b instanceof ObjNumber && a.val === b.val) {
             result = true;
           } else if (a instanceof ObjString && b instanceof ObjString && a.val === b.val) {
             result = true;
@@ -616,7 +615,7 @@ class VM {
             const b = this.pop() as ObjNumber;
             const a = this.pop() as ObjNumber;
 
-            this.push(new ObjNumber(a.val.plus(b.val)));
+            this.push(new ObjNumber(a.val + b.val));
           } else {
             this.runtimeError('Operands must be two numbers or two strings.');
             return InterpretResult.InterpretRuntimeError;
@@ -653,7 +652,7 @@ class VM {
             return InterpretResult.InterpretRuntimeError;
           }
 
-          this.push(new ObjNumber((this.pop() as ObjNumber).val.times(-1)));
+          this.push(new ObjNumber((this.pop() as ObjNumber).val * -1n));
           break;
         }
         case OpCode.OpPrint: {
@@ -814,12 +813,12 @@ class VM {
         case OpCode.OpArraySet: {
           const val = this.pop();
           const arrIndex = this.pop();
-          let arrIndexNum: number = -1;
+          let arrIndexNum: bigint = -1n;
           if (!(arrIndex instanceof ObjNumber)) {
             this.runtimeError(`Index ${arrIndex.asString()} is not number.`);
             return InterpretResult.InterpretRuntimeError;
           }
-          arrIndexNum = (arrIndex as ObjNumber).val.toNumber();
+          arrIndexNum = (arrIndex as ObjNumber).val;
           const arr = this.pop() as ObjArray;
 
           if (arrIndexNum < 0 || arrIndexNum > arr.length() - 1) {
@@ -832,12 +831,12 @@ class VM {
         }
         case OpCode.OpArrayGet: {
           const arrIndex = this.pop();
-          let arrIndexNum: number = -1;
+          let arrIndexNum: bigint = -1n;
           if (!(arrIndex instanceof ObjNumber)) {
             this.runtimeError(`Index ${arrIndex.asString()} is not number.`);
             return InterpretResult.InterpretRuntimeError;
           }
-          arrIndexNum = (arrIndex as ObjNumber).val.toNumber();
+          arrIndexNum = (arrIndex as ObjNumber).val;
           const arr = this.pop() as ObjArray;
 
           if (arrIndexNum < 0 || arrIndexNum > arr.length() - 1) {

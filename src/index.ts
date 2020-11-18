@@ -14,6 +14,10 @@ async function run() {
 
     const func = VM.compile(source);
 
+    if (!func) {
+      process.exit(65);
+    }
+
     const result = await vm.interpret(func);
 
     if (result === InterpretResult.InterpretCompileError) process.exit(65);

@@ -1,5 +1,5 @@
 // test file
-let t = [0.1, 1, 3];
+let t = [1000, 1, 3];
 //t[1+1] = 4;
 //let g = t[2];
 //print(t);

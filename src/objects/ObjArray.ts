@@ -7,11 +7,13 @@ class ObjArray implements Obj {
     this.val = values;
   }
 
-  set(index: number, value: Obj) {
+  set(index: bigint, value: Obj) {
+    // @ts-ignore
     this.val[index] = value;
   }
 
-  get(index: number): Obj {
+  get(index: bigint): Obj {
+    // @ts-ignore
     return this.val[index];
   }
 
