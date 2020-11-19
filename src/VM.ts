@@ -20,7 +20,6 @@ import ObjNull from './objects/ObjNull';
 import ObjBool from './objects/ObjBool';
 import ObjString from './objects/ObjString';
 import ObjFunction from './objects/ObjFunction';
-import ObjUndefined from './objects/ObjUndefined';
 import ObjArray from './objects/ObjArray';
 import { ArrayClass } from './nativeclasses/Array';
 import { MapClass } from './nativeclasses/Map';
@@ -595,7 +594,6 @@ class VM {
           let result = false;
           const pop = this.pop();
           if (pop instanceof ObjNull
-            || pop instanceof ObjUndefined
             || (pop instanceof ObjBool && (pop as ObjBool).val === false)) {
             result = true;
           }
@@ -621,7 +619,6 @@ class VM {
           const offset = frame.readByte();
           const peek = this.peek(0);
           if (peek instanceof ObjNull
-            || peek instanceof ObjUndefined
             || (peek instanceof ObjBool && (peek as ObjBool).val === false)) {
             if (typeof offset !== 'number') {
               throw new Error('offset must be a number');

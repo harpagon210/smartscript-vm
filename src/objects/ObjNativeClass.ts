@@ -16,9 +16,8 @@ class ObjNativeClass implements Obj {
   }
 
   //@ts-ignore this method has to be overriden by the native class
-  asStringNative(instance: ObjInstance): string {
+  abstract asStringNative(instance: ObjInstance): string {
     throw new Error(`asStringNative to be implemented for ObjNativeClass: ${this.name}`)
-    return `<nativeclass ${this.name}>`;
   }
 
   getMethod(key: string): Function {

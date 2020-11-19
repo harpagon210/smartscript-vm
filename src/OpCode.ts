@@ -23,7 +23,6 @@ enum OpCode {
   OpJumpIfFalse,
   OpJump,
   OpLoop,
-  OpUndefined,
   OpCall,
   OpClosure,
   OpGetUpvalue,

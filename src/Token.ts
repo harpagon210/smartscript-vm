@@ -39,7 +39,6 @@ const enum TokenType {
   TokenFunction,
   TokenIf,
   TokenNull,
-  TokenUndefined,
   TokenOr,
   TokenPrint,
   TokenReturn,
