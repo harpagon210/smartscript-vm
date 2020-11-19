@@ -3,6 +3,7 @@ import ObjBool from '../objects/ObjBool';
 import ObjInstance from '../objects/ObjInstance';
 import ObjNativeClass from '../objects/ObjNativeClass';
 import ObjNull from '../objects/ObjNull';
+// eslint-disable-next-line import/no-cycle
 import VM from '../VM';
 
 const MapClass = new ObjNativeClass('Map');
@@ -22,7 +23,7 @@ MapClass.asStringNative = (instance: ObjInstance) => {
 
   output += ' }';
   return output;
-}
+};
 
 MapClass.setMethod('set', (vm: VM, argCount: number, key: Obj, value: Obj) => {
   const instance = vm.stack[vm.stack.length - argCount - 1];
@@ -68,4 +69,4 @@ MapClass.setMethod('clear', (vm: VM, argCount: number) => {
   return false;
 });
 
-export { MapClass }
+export default MapClass;

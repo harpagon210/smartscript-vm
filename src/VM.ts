@@ -21,8 +21,10 @@ import ObjBool from './objects/ObjBool';
 import ObjString from './objects/ObjString';
 import ObjFunction from './objects/ObjFunction';
 import ObjArray from './objects/ObjArray';
-import { ArrayClass } from './nativeclasses/Array';
-import { MapClass } from './nativeclasses/Map';
+// eslint-disable-next-line import/no-cycle
+import ArrayClass from './nativeclasses/Array';
+// eslint-disable-next-line import/no-cycle
+import MapClass from './nativeclasses/Map';
 
 const FRAMES_MAX = 11000;
 
@@ -39,13 +41,13 @@ class VM {
 
   chunk: Chunk;
 
-  globals: Map<string, Obj>;
+  private globals: Map<string, Obj>;
 
-  frames: Array<CallFrame>;
+  private frames: Array<CallFrame>;
 
-  openUpValues: ObjUpValue;
+  private openUpValues: ObjUpValue;
 
-  benchmarks: Map<OpCode, Array<number>>;
+  private benchmarks: Map<OpCode, Array<number>>;
 
   constructor() {
     this.ip = null;
@@ -152,25 +154,25 @@ class VM {
     return this.run();
   }
 
-  push(obj: Obj): void {
+  private push(obj: Obj): void {
     this.stack.push(obj);
   }
 
-  pop(): Obj {
+  private pop(): Obj {
     return this.stack.pop();
   }
 
-  setGlobal(key: string, obj: Obj): boolean {
+  private setGlobal(key: string, obj: Obj): boolean {
     const isNewKey = !this.globals.has(key);
     this.globals.set(key, obj);
     return isNewKey;
   }
 
-  getGlobal(key: string): Obj {
+  private getGlobal(key: string): Obj {
     return this.globals.get(key);
   }
 
-  binaryOp(operator: string): InterpretResult {
+  private binaryOp(operator: string): InterpretResult {
     if (!(this.peek(0) instanceof ObjNumber) || !(this.peek(1) instanceof ObjNumber)) {
       this.runtimeError('Operands must be numbers.');
       return InterpretResult.InterpretRuntimeError;
@@ -207,18 +209,23 @@ class VM {
         res = a.val ** b.val;
         break;
       case '&':
+        // eslint-disable-next-line no-bitwise
         res = a.val & b.val;
         break;
       case '|':
+        // eslint-disable-next-line no-bitwise
         res = a.val | b.val;
         break;
       case '^':
+        // eslint-disable-next-line no-bitwise
         res = a.val ^ b.val;
         break;
       case '<<':
+        // eslint-disable-next-line no-bitwise
         res = a.val << b.val;
         break;
       case '>>':
+        // eslint-disable-next-line no-bitwise
         res = a.val >> b.val;
         break;
       default:
@@ -233,15 +240,15 @@ class VM {
     return this.stack[this.stack.length - 1 - distance];
   }
 
-  resetStack(): void {
+  private resetStack(): void {
     this.stack = [];
   }
 
-  defineNative(name: string, func: ObjNativeFunction) {
+  private defineNative(name: string, func: ObjNativeFunction) {
     this.setGlobal(name, func);
   }
 
-  call(closure: ObjClosure, argCount: number): boolean {
+  private call(closure: ObjClosure, argCount: number): boolean {
     const { arity } = closure.func;
     if (argCount !== arity) {
       this.runtimeError(`Expected ${arity} arguments but got ${argCount}.`);
@@ -255,7 +262,7 @@ class VM {
     return true;
   }
 
-  async invokeFromClass(klass: ObjClass | ObjNativeClass,
+  private async invokeFromClass(klass: ObjClass | ObjNativeClass,
     name: string, argCount: number): Promise<boolean> {
     if (klass instanceof ObjNativeClass) {
       const method = klass.getMethod(name);
@@ -287,7 +294,7 @@ class VM {
     return this.call(method, argCount);
   }
 
-  async invoke(name: string, argCount: number): Promise<boolean> {
+  private async invoke(name: string, argCount: number): Promise<boolean> {
     const receiver = this.peek(argCount);
     if (!(receiver instanceof ObjInstance)) {
       this.runtimeError('Only instances have methods.');
@@ -304,7 +311,7 @@ class VM {
     return this.invokeFromClass(instance.klass, name, argCount);
   }
 
-  async callValue(callee: Obj, argCount: number): Promise<boolean> {
+  private async callValue(callee: Obj, argCount: number): Promise<boolean> {
     if (callee instanceof ObjBoundMethod) {
       this.stack[this.stack.length - argCount - 1] = callee.receiver;
       return this.call(callee.method, argCount);
@@ -378,7 +385,7 @@ class VM {
     this.resetStack();
   }
 
-  captureUpvalue(local: number): ObjUpValue {
+  private captureUpvalue(local: number): ObjUpValue {
     let prevUpvalue = null;
     let upvalue = this.openUpValues;
     while (upvalue !== null && upvalue.location > local) {
@@ -400,7 +407,7 @@ class VM {
     return createdUpvalue;
   }
 
-  closeUpvalues(last: number): void {
+  private closeUpvalues(last: number): void {
     while (this.openUpValues !== null
       && this.openUpValues.location >= last) {
       const upvalue = this.openUpValues;
@@ -409,8 +416,7 @@ class VM {
     }
   }
 
-
-  defineMethod(name: string): void {
+  private defineMethod(name: string): void {
     const method = this.peek(0);
     const klass = this.peek(1);
     if (method instanceof ObjClosure && klass instanceof ObjClass) {
@@ -419,7 +425,7 @@ class VM {
     this.pop();
   }
 
-  bindMethod(klass: ObjClass, name: string): boolean {
+  private bindMethod(klass: ObjClass, name: string): boolean {
     const method = klass.getMethod(name);
     if (!method) {
       this.runtimeError(`Undefined property '${name}'.`);
@@ -431,7 +437,7 @@ class VM {
     return true;
   }
 
-  async run(): Promise<InterpretResult> {
+  private async run(): Promise<InterpretResult> {
     for (; ;) {
       let frame = this.frames[this.frames.length - 1];
       const instruction = frame.readByte();
@@ -665,6 +671,7 @@ class VM {
             return InterpretResult.InterpretRuntimeError;
           }
 
+          // eslint-disable-next-line no-bitwise
           this.push(new ObjNumber(~(this.pop() as ObjNumber).val));
           break;
         }

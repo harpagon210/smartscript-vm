@@ -1,4 +1,5 @@
 import Obj from './Obj';
+// eslint-disable-next-line import/no-cycle
 import ObjInstance from './ObjInstance';
 
 class ObjNativeClass implements Obj {
@@ -15,9 +16,10 @@ class ObjNativeClass implements Obj {
     return `<nativeclass ${this.name}>`;
   }
 
-  //@ts-ignore this method has to be overriden by the native class
-  abstract asStringNative(instance: ObjInstance): string {
-    throw new Error(`asStringNative to be implemented for ObjNativeClass: ${this.name}`)
+  // @ts-ignore this method has to be overriden by the native class
+  // eslint-disable-next-line class-methods-use-this
+  asStringNative(instance: ObjInstance): string {
+    return `<nativeinstance ${instance.klass.name}>`;
   }
 
   getMethod(key: string): Function {

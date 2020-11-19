@@ -1,13 +1,14 @@
 import Obj from './Obj';
 import ObjClass from './ObjClass';
+// eslint-disable-next-line import/no-cycle
 import ObjNativeClass from './ObjNativeClass';
 
 class ObjInstance implements Obj {
-  klass: ObjClass|ObjNativeClass;
+  klass: ObjClass | ObjNativeClass;
 
   fields: Map<string, Obj>;
 
-  constructor(klass: ObjClass|ObjNativeClass) {
+  constructor(klass: ObjClass | ObjNativeClass) {
     this.klass = klass;
     this.fields = new Map();
   }

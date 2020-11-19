@@ -943,7 +943,6 @@ class Compiler {
       this.namedVariable(className, false);
     }
 
-
     this.consume(TokenType.TokenLeftBrace, "Expect '{' before class body.");
     while (!this.check(TokenType.TokenRightBrace) && !this.check(TokenType.TokenEof)) {
       this.method();

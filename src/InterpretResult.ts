@@ -1,4 +1,4 @@
-const enum InterpretResult {
+enum InterpretResult {
   InterpretOk,
   InterpretCompileError,
   InterpretRuntimeError,

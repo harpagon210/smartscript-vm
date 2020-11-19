@@ -1,9 +1,10 @@
 import Obj from '../objects/Obj';
 import ObjArray from '../objects/ObjArray';
 import ObjInstance from '../objects/ObjInstance';
-import ObjNativeClass from "../objects/ObjNativeClass";
+import ObjNativeClass from '../objects/ObjNativeClass';
 import ObjNull from '../objects/ObjNull';
 import ObjNumber from '../objects/ObjNumber';
+// eslint-disable-next-line import/no-cycle
 import VM from '../VM';
 
 const ArrayClass = new ObjNativeClass('Array');
@@ -21,7 +22,7 @@ ArrayClass.asStringNative = (instance: ObjInstance) => {
   }
   output += ' ]';
   return output;
-}
+};
 
 ArrayClass.setMethod('constructor', (vm: VM, argCount: number) => {
   const instance = vm.stack[vm.stack.length - argCount - 1];
@@ -154,6 +155,7 @@ ArrayClass.setMethod('shift', (vm: VM, argCount: number) => {
       }
       return new ObjNull();
     }
+
     vm.runtimeError('array is not an instance of ObjArray');
     return false;
   }
@@ -161,4 +163,4 @@ ArrayClass.setMethod('shift', (vm: VM, argCount: number) => {
   return false;
 });
 
-export { ArrayClass };
+export default ArrayClass;

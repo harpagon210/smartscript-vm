@@ -247,19 +247,21 @@ class Scanner {
       case '<':
         if (this.match('=')) {
           return this.makeToken(TokenType.TokenLessEqual);
-        } else if (this.match('<')) {
-          return this.makeToken(TokenType.TokenBitwiseShiftLeft);
-        } else {
-          return this.makeToken(TokenType.TokenLess)
         }
+
+        if (this.match('<')) {
+          return this.makeToken(TokenType.TokenBitwiseShiftLeft);
+        }
+        return this.makeToken(TokenType.TokenLess);
       case '>':
         if (this.match('=')) {
           return this.makeToken(TokenType.TokenGreaterEqual);
-        } else if (this.match('>')) {
-          return this.makeToken(TokenType.TokenBitwiseShiftRight);
-        } else {
-          return this.makeToken(TokenType.TokenGreater)
         }
+
+        if (this.match('>')) {
+          return this.makeToken(TokenType.TokenBitwiseShiftRight);
+        }
+        return this.makeToken(TokenType.TokenGreater);
       case '"':
         return this.string('"');
       case "'":

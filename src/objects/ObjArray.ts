@@ -28,7 +28,7 @@ class ObjArray implements Obj {
   unshift(value: Obj) {
     this.val.unshift(value);
   }
-  
+
   shift(): Obj {
     return this.val.shift();
   }
