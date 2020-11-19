@@ -35,7 +35,7 @@ class Compiler {
   currentClass: ClassCompiler;
 
   compilingConst: boolean;
-  
+
   globalConsts: Array<string>;
 
   rules: Map<TokenType, Rule>;
@@ -104,6 +104,7 @@ class Compiler {
     this.rules.set(TokenType.TokenTrue, new Rule('literal', null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenLet, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenConst, new Rule(null, null, Precedence.PrecNone));
+    this.rules.set(TokenType.TokenDo, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenWhile, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenError, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenEof, new Rule(null, null, Precedence.PrecNone));
@@ -598,9 +599,15 @@ class Compiler {
     this.currentChunk().code[offset] = jump;
   }
 
-  emitJump(instruction: OpCode): number {
-    this.emitByte(instruction);
-    this.emitByte(0);
+  emitJump(instruction: OpCode, offset?: number): number {
+    if (offset) {
+      this.emitByte(instruction);
+      this.emitByte(offset);
+    } else {
+      this.emitByte(instruction);
+      this.emitByte(0);
+    }
+
     return this.currentChunk().code.length - 1;
   }
 
@@ -648,6 +655,21 @@ class Compiler {
     this.emitLoop(loopStart);
 
     this.patchJump(exitJump);
+    this.emitByte(OpCode.OpPop);
+  }
+
+  dowhileStatement(): void {
+    const loopStart = this.currentChunk().code.length;
+
+    this.statement();
+
+    this.consume(TokenType.TokenWhile, "Expect 'while' after 'do'.");
+    this.consume(TokenType.TokenLeftParen, "Expect '(' after 'while'.");
+    this.expression();
+    this.consume(TokenType.TokenRightParen, "Expect ')' after condition.");
+    this.consume(TokenType.TokenSemicolon, "Expect ';' after loop condition.");
+    this.emitJump(OpCode.OpJumpIfFalse, 2);
+    this.emitLoop(loopStart);
     this.emitByte(OpCode.OpPop);
   }
 
@@ -751,6 +773,8 @@ class Compiler {
       this.ifStatement();
     } else if (this.match(TokenType.TokenReturn)) {
       this.returnStatement();
+    } else if (this.match(TokenType.TokenDo)) {
+      this.dowhileStatement();
     } else if (this.match(TokenType.TokenWhile)) {
       this.whileStatement();
     } else if (this.match(TokenType.TokenLeftBrace)) {

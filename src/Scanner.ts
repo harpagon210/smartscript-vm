@@ -131,6 +131,7 @@ class Scanner {
         } else {
           return TokenType.TokenIdentifier;
         }
+      case 'd': return this.checkKeyword(1, 1, 'o', TokenType.TokenDo);
       case 'e':
         if (this.current - this.start > 1) {
           switch (this.source[this.start + 1]) {

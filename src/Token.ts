@@ -55,6 +55,7 @@ const enum TokenType {
   TokenTrue,
   TokenLet,
   TokenConst,
+  TokenDo,
   TokenWhile,
   TokenNew,
   TokenExt,
