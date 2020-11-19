@@ -13,7 +13,7 @@ class Scanner {
     this.source = source;
     this.start = 0;
     this.current = 0;
-    this.line = 1;
+    this.line = 0;
   }
 
   isAtEnd(): boolean {
@@ -49,9 +49,9 @@ class Scanner {
     return this.source[this.current];
   }
 
-  peekNext(): string {
+  peekNext(offset: number = 1): string {
     if (this.isAtEnd()) return '\0';
-    return this.source[this.current + 1];
+    return this.source[this.current + offset];
   }
 
   skipWhitespace(): void {
@@ -71,6 +71,25 @@ class Scanner {
           if (this.peekNext() === '/') {
             // A comment goes until the end of the line.
             while (this.peek() !== '\n' && !this.isAtEnd()) this.advance();
+            this.line += 1;
+          } else if (this.peekNext() === '*') {
+            // A multi line comment goes until the */.
+            for (; ;) {
+              if (this.isAtEnd()) {
+                break;
+              }
+
+              if (this.peekNext() === '*' && this.peekNext(2) === '/') {
+                this.advance();
+                this.advance();
+                this.advance();
+                break;
+              } else if (this.peekNext() === '\n') {
+                this.line += 1;
+              }
+
+              this.advance();
+            }
           } else {
             return;
           }
@@ -121,7 +140,7 @@ class Scanner {
 
   identifierType(): TokenType {
     switch (this.source[this.start]) {
-      case 'c': 
+      case 'c':
         if (this.current - this.start > 1) {
           switch (this.source[this.start + 1]) {
             case 'l': return this.checkKeyword(2, 3, 'ass', TokenType.TokenClass);
@@ -191,6 +210,9 @@ class Scanner {
 
   scanToken(): Token {
     this.skipWhitespace();
+    if (this.current === 0) {
+      this.line = 1;
+    }
     this.start = this.current;
 
     if (this.isAtEnd()) return this.makeToken(TokenType.TokenEof);
