@@ -96,7 +96,7 @@ class Compiler {
     this.rules.set(TokenType.TokenSuper, new Rule('superr', null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenThis, new Rule('thiss', null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenTrue, new Rule('literal', null, Precedence.PrecNone));
-    this.rules.set(TokenType.TokenVar, new Rule(null, null, Precedence.PrecNone));
+    this.rules.set(TokenType.TokenLet, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenWhile, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenError, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenEof, new Rule(null, null, Precedence.PrecNone));
@@ -639,7 +639,7 @@ class Compiler {
     this.consume(TokenType.TokenLeftParen, "Expect '(' after 'for'.");
     if (this.match(TokenType.TokenSemicolon)) {
       // No initializer.
-    } else if (this.match(TokenType.TokenVar)) {
+    } else if (this.match(TokenType.TokenLet)) {
       this.varDeclaration();
     } else {
       this.expressionStatement();
@@ -919,7 +919,7 @@ class Compiler {
       this.classDeclaration();
     } else if (this.match(TokenType.TokenFunction)) {
       this.funDeclaration();
-    } else if (this.match(TokenType.TokenVar)) {
+    } else if (this.match(TokenType.TokenLet)) {
       this.varDeclaration();
     } else {
       this.statement();
@@ -937,7 +937,7 @@ class Compiler {
       switch (this.parser.current.type) {
         case TokenType.TokenClass:
         case TokenType.TokenFunction:
-        case TokenType.TokenVar:
+        case TokenType.TokenLet:
         case TokenType.TokenFor:
         case TokenType.TokenIf:
         case TokenType.TokenWhile:

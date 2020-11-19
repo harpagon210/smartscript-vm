@@ -53,7 +53,7 @@ const enum TokenType {
   TokenSuper,
   TokenThis,
   TokenTrue,
-  TokenVar,
+  TokenLet,
   TokenWhile,
   TokenNew,
   TokenExt,

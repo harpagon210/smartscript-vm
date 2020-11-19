@@ -144,7 +144,7 @@ class Scanner {
           return TokenType.TokenIdentifier;
         }
       case 'i': return this.checkKeyword(1, 1, 'f', TokenType.TokenIf);
-      case 'l': return this.checkKeyword(1, 2, 'et', TokenType.TokenVar);
+      case 'l': return this.checkKeyword(1, 2, 'et', TokenType.TokenLet);
       case 'n':
         if (this.current - this.start > 1) {
           switch (this.source[this.start + 1]) {
