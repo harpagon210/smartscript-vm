@@ -12,7 +12,7 @@ class ObjArray implements Obj {
     this.val[index] = value;
   }
 
-  get(index: bigint): Obj {
+  get(index: bigint|number): Obj {
     // @ts-ignore
     return this.val[index];
   }
@@ -23,6 +23,14 @@ class ObjArray implements Obj {
 
   pop(): Obj {
     return this.val.pop();
+  }
+
+  unshift(value: Obj) {
+    this.val.unshift(value);
+  }
+  
+  shift(): Obj {
+    return this.val.shift();
   }
 
   clear(): void {

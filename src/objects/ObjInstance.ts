@@ -13,6 +13,9 @@ class ObjInstance implements Obj {
   }
 
   asString(): string {
+    if (this.klass instanceof ObjNativeClass) {
+      return this.klass.asStringNative(this);
+    }
     return `<${this.klass.name} instance>`;
   }
 

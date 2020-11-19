@@ -154,10 +154,10 @@ const disassembleInstruction = (chunk: Chunk, offset: number): number => {
       return invokeInstruction('OP_SUPER_INVOKE', chunk, offset);
     case OpCode.OpArrayInit:
       return simpleInstruction('OP_ARRAY_INIT', chunk, offset);
-    case OpCode.OpArraySet:
-      return simpleInstruction('OP_ARRAY_SET', chunk, offset);
-    case OpCode.OpArrayGet:
-      return simpleInstruction('OP_ARRAY_GET', chunk, offset);
+    case OpCode.OpArrayMapSet:
+      return simpleInstruction('OP_ARRAY_MAP_SET', chunk, offset);
+    case OpCode.OpArrayMapGet:
+      return simpleInstruction('OP_ARRAY_MAP_GET', chunk, offset);
     case OpCode.OpMapInit:
       return simpleInstruction('OP_MAP_INIT', chunk, offset);
     default:

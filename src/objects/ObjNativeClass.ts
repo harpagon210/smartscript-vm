@@ -1,4 +1,5 @@
 import Obj from './Obj';
+import ObjInstance from './ObjInstance';
 
 class ObjNativeClass implements Obj {
   name: string;
@@ -11,6 +12,12 @@ class ObjNativeClass implements Obj {
   }
 
   asString(): string {
+    return `<nativeclass ${this.name}>`;
+  }
+
+  //@ts-ignore this method has to be overriden by the native class
+  asStringNative(instance: ObjInstance): string {
+    throw new Error(`asStringNative to be implemented for ObjNativeClass: ${this.name}`)
     return `<nativeclass ${this.name}>`;
   }
 

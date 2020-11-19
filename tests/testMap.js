@@ -26,3 +26,8 @@ print(t.key2);
 print(k.key3);
 print(g);
 t.key2.meth();
+
+k['key3'] = 'new value';
+print(k.key3);
+
+print(t);

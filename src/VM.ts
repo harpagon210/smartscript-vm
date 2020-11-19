@@ -22,6 +22,8 @@ import ObjString from './objects/ObjString';
 import ObjFunction from './objects/ObjFunction';
 import ObjUndefined from './objects/ObjUndefined';
 import ObjArray from './objects/ObjArray';
+import { ArrayClass } from './nativeclasses/Array';
+import { MapClass } from './nativeclasses/Map';
 
 const FRAMES_MAX = 11000;
 
@@ -65,54 +67,8 @@ class VM {
     });
 
     this.defineNative('wait', new ObjNativeFunction(wait, 'wait'));
-
-    const mapClass = new ObjNativeClass('Map');
-    mapClass.setMethod('set', (argCount: number, key: Obj, value: Obj) => {
-      const instance = this.stack[this.stack.length - argCount - 1];
-      if (instance instanceof ObjInstance && instance.klass.name === 'Map') {
-        instance.setField(key.asString(), value);
-        return new ObjNull();
-      }
-      this.runtimeError('Object is not an instance of Map');
-      return false;
-    });
-
-    mapClass.setMethod('get', (argCount: number, key: Obj) => {
-      const instance = this.stack[this.stack.length - argCount - 1];
-      if (instance instanceof ObjInstance && instance.klass.name === 'Map') {
-        const name = key.asString();
-        const val = instance.getField(name);
-        if (val) {
-          return val;
-        }
-        this.runtimeError(`Undefined property '${name}'.`);
-        return false;
-      }
-      this.runtimeError('Object is not an instance of Map');
-      return false;
-    });
-
-    mapClass.setMethod('has', (argCount: number, key: Obj) => {
-      const instance = this.stack[this.stack.length - argCount - 1];
-      if (instance instanceof ObjInstance && instance.klass.name === 'Map') {
-        return new ObjBool(instance.fields.has(key.asString()));
-      }
-      this.runtimeError('Object is not an instance of Map');
-      return false;
-    });
-
-    mapClass.setMethod('clear', (argCount: number) => {
-      const instance = this.stack[this.stack.length - argCount - 1];
-      if (instance instanceof ObjInstance && instance.klass.name === 'Map') {
-        instance.fields.clear();
-        return new ObjNull();
-      }
-      this.runtimeError('Object is not an instance of Map');
-      return false;
-    });
-
-    this.setGlobal('Map', mapClass);
-
+    this.setGlobal('Map', MapClass);
+    this.setGlobal('Array', ArrayClass);
     /*
     const stringClass = new ObjNativeClass('String');
     stringClass.
@@ -287,7 +243,8 @@ class VM {
         this.runtimeError(`Undefined property '${name}'.`);
         return false;
       }
-      const result = await method(argCount, ...this.stack.slice(-argCount));
+
+      const result = await method(this, argCount, ...this.stack.slice(-argCount));
       // add 1 to the argCount to pop the instance as well
       for (let index = argCount + 1; index > 0; index -= 1) {
         this.stack.pop();
@@ -337,7 +294,7 @@ class VM {
       this.stack[this.stack.length - argCount - 1] = new ObjInstance(callee);
       const initializer = callee.getMethod('constructor');
       if (initializer) {
-        const result = await initializer(argCount, ...this.stack.slice(-argCount));
+        const result = await initializer(this, argCount, ...this.stack.slice(-argCount));
         for (let index = argCount - 1; index >= 0; index -= 1) {
           this.stack.pop();
         }
@@ -807,44 +764,12 @@ class VM {
             arr[index] = val;
           }
 
-          this.push(new ObjArray(arr));
-          break;
-        }
-        case OpCode.OpArraySet: {
-          const val = this.pop();
-          const arrIndex = this.pop();
-          let arrIndexNum: bigint = -1n;
-          if (!(arrIndex instanceof ObjNumber)) {
-            this.runtimeError(`Index ${arrIndex.asString()} is not number.`);
-            return InterpretResult.InterpretRuntimeError;
-          }
-          arrIndexNum = (arrIndex as ObjNumber).val;
-          const arr = this.pop() as ObjArray;
+          const arrayNativeClass = this.getGlobal('Array') as ObjNativeClass;
+          const array = new ObjInstance(arrayNativeClass);
+          array.setField('array', new ObjArray(arr));
 
-          if (arrIndexNum < 0 || arrIndexNum > arr.length() - 1) {
-            this.runtimeError(`Out of bound ${arrIndexNum}.`);
-            return InterpretResult.InterpretRuntimeError;
-          }
+          this.push(array);
 
-          arr.set(arrIndexNum, val);
-          break;
-        }
-        case OpCode.OpArrayGet: {
-          const arrIndex = this.pop();
-          let arrIndexNum: bigint = -1n;
-          if (!(arrIndex instanceof ObjNumber)) {
-            this.runtimeError(`Index ${arrIndex.asString()} is not number.`);
-            return InterpretResult.InterpretRuntimeError;
-          }
-          arrIndexNum = (arrIndex as ObjNumber).val;
-          const arr = this.pop() as ObjArray;
-
-          if (arrIndexNum < 0 || arrIndexNum > arr.length() - 1) {
-            this.runtimeError(`Out of bound ${arrIndexNum}.`);
-            return InterpretResult.InterpretRuntimeError;
-          }
-
-          this.push(arr.get(arrIndexNum));
           break;
         }
         case OpCode.OpMapInit: {
@@ -871,7 +796,41 @@ class VM {
           for (let index = keysValues.length - 1; index >= 0; index -= 2) {
             const key = keysValues[index];
             const val = keysValues[index - 1];
-            setFn(0, key, val);
+            setFn(this, 0, key, val);
+          }
+          break;
+        }
+        case OpCode.OpArrayMapSet: {
+          const val = this.pop();
+          const index = this.pop();
+          const instance = this.peek(0);
+
+          if (!(instance instanceof ObjInstance)) {
+            throw new Error('not an ObjInstance');
+          } else {
+            const setFn = instance.klass.getMethod('set') as Function;
+            if (!setFn(this, 0, index, val)) {
+              return InterpretResult.InterpretRuntimeError;
+            }
+          }
+
+          break;
+        }
+        case OpCode.OpArrayMapGet: {
+          const index = this.pop();
+          const instance = this.peek(0);
+
+          if (!(instance instanceof ObjInstance)) {
+            throw new Error('not an ObjInstance');
+          } else {
+            const getFn = instance.klass.getMethod('get') as Function;
+            const val = getFn(this, 0, index);
+            if (val === false) {
+              return InterpretResult.InterpretRuntimeError;
+            }
+            // pop the instance
+            this.pop();
+            this.push(val);
           }
           break;
         }

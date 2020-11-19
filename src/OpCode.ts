@@ -38,9 +38,9 @@ enum OpCode {
   OpInvoke,
   OpSuperInvoke,
   OpArrayInit,
-  OpArraySet,
-  OpArrayGet,
   OpMapInit,
+  OpArrayMapSet,
+  OpArrayMapGet,
   OpUnknown,
 }
 

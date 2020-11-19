@@ -345,9 +345,9 @@ class Compiler {
     this.consume(TokenType.TokenRightBracket, "Expect ']' after arguments.");
     if (canAssign && this.match(TokenType.TokenEqual)) {
       this.expression();
-      this.emitByte(OpCode.OpArraySet);
+      this.emitByte(OpCode.OpArrayMapSet);
     } else {
-      this.emitByte(OpCode.OpArrayGet);
+      this.emitByte(OpCode.OpArrayMapGet);
     }
   }
 
