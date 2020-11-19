@@ -2,8 +2,8 @@ import * as fs from 'fs';
 import VM from './VM';
 import InterpretResult from './InterpretResult';
 
-process.env.DEBUG_TRACE_EXECUTION = 'tru';
-process.env.DEBUG_PRINT_CODE = 'tru';
+process.env.DEBUG_TRACE_EXECUTION = 'true';
+process.env.DEBUG_PRINT_CODE = 'true';
 process.env.BENCHMARK = 'tru';
 
 async function run() {

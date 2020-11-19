@@ -121,7 +121,16 @@ class Scanner {
 
   identifierType(): TokenType {
     switch (this.source[this.start]) {
-      case 'c': return this.checkKeyword(1, 4, 'lass', TokenType.TokenClass);
+      case 'c': 
+        if (this.current - this.start > 1) {
+          switch (this.source[this.start + 1]) {
+            case 'l': return this.checkKeyword(2, 3, 'ass', TokenType.TokenClass);
+            case 'o': return this.checkKeyword(2, 3, 'nst', TokenType.TokenConst);
+            default: return TokenType.TokenIdentifier;
+          }
+        } else {
+          return TokenType.TokenIdentifier;
+        }
       case 'e':
         if (this.current - this.start > 1) {
           switch (this.source[this.start + 1]) {

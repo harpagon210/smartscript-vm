@@ -34,6 +34,10 @@ class Compiler {
 
   currentClass: ClassCompiler;
 
+  compilingConst: boolean;
+  
+  globalConsts: Array<string>;
+
   rules: Map<TokenType, Rule>;
 
   constructor(type: FunctionType, scanner: Scanner, enclosing?: Compiler) {
@@ -46,6 +50,8 @@ class Compiler {
     this.func = new ObjFunction();
     this.type = type;
     this.currentClass = enclosing ? enclosing.currentClass : null;
+    this.compilingConst = false;
+    this.globalConsts = [];
 
     this.rules = new Map<TokenType, Rule>();
     this.rules.set(TokenType.TokenLeftParen, new Rule('grouping', 'call', Precedence.PrecCall));
@@ -97,15 +103,16 @@ class Compiler {
     this.rules.set(TokenType.TokenThis, new Rule('thiss', null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenTrue, new Rule('literal', null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenLet, new Rule(null, null, Precedence.PrecNone));
+    this.rules.set(TokenType.TokenConst, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenWhile, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenError, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenEof, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenExt, new Rule(null, null, Precedence.PrecNone));
 
     if (type !== FunctionType.TypeFunction) {
-      this.locals.push(new Local('this', 0, false));
+      this.locals.push(new Local('this', 0, false, false));
     } else {
-      this.locals.push(new Local('', 0, false));
+      this.locals.push(new Local('', 0, false, false));
     }
 
     if (type !== FunctionType.TypeScript) {
@@ -211,18 +218,18 @@ class Compiler {
     this.emitBytes(OpCode.OpConstant, this.makeConstant(obj));
   }
 
-  resolveLocal(name: string): number {
+  resolveLocal(name: string): { index: number, isConst: boolean } {
     for (let i = this.locals.length - 1; i >= 0; i -= 1) {
       const local = this.locals[i];
       if (name === local.name) {
         if (local.depth === -1) {
           this.error('Cannot read local variable in its own initializer.');
         }
-        return i;
+        return { index: i, isConst: local.isConst };
       }
     }
 
-    return -1;
+    return { index: -1, isConst: false };
   }
 
   addUpvalue(index: number, isLocal: boolean): number {
@@ -242,48 +249,58 @@ class Compiler {
     return this.func.upvalues.length - 1;
   }
 
-  resolveUpvalue(name: string): number {
-    if (this.enclosing === null) return -1;
-    const local = this.enclosing.resolveLocal(name);
+  resolveUpvalue(name: string): { index: number, isConst: boolean } {
+    if (this.enclosing === null) return { index: -1, isConst: false };
+    const { index: local } = this.enclosing.resolveLocal(name);
     if (local !== -1) {
       this.enclosing.locals[local].isCaptured = true;
-      return this.addUpvalue(local, true);
+      return { index: this.addUpvalue(local, true), isConst: this.enclosing.locals[local].isConst };
     }
 
-    const upvalue = this.enclosing.resolveUpvalue(name);
+    const { index: upvalue, isConst } = this.enclosing.resolveUpvalue(name);
     if (upvalue !== -1) {
-      return this.addUpvalue(upvalue, false);
+      return { index: this.addUpvalue(upvalue, false), isConst };
     }
 
-    return -1;
+    return { index: -1, isConst: false };
   }
 
   namedVariable(name: string, canAssign: boolean, isInherit?: boolean): void {
     let getOp;
     let setOp;
-    let arg = this.resolveLocal(name);
-    if (arg !== -1) {
+    let idx;
+    let isConstant;
+    const local = this.resolveLocal(name);
+    idx = local.index;
+    isConstant = local.isConst;
+    if (idx !== -1) {
       getOp = OpCode.OpGetLocal;
       setOp = OpCode.OpSetLocal;
     } else {
-      arg = this.resolveUpvalue(name);
-      if (arg !== -1) {
+      const upvalue = this.resolveUpvalue(name);
+      idx = upvalue.index;
+      isConstant = upvalue.isConst;
+      if (idx !== -1) {
         getOp = OpCode.OpGetUpvalue;
         setOp = OpCode.OpSetUpvalue;
       } else {
-        arg = this.identifierConstant(name);
+        isConstant = this.globalConsts.includes(name);
+        idx = this.identifierConstant(name);
         getOp = OpCode.OpGetGlobal;
         setOp = OpCode.OpSetGlobal;
       }
     }
 
     if (canAssign && this.match(TokenType.TokenEqual)) {
+      if (isConstant) {
+        this.error(`Cannot reassign const ${name}`);
+      }
       this.expression();
-      this.emitBytes(setOp, arg);
+      this.emitBytes(setOp, idx);
     } else if (isInherit) {
-      this.emitBytes(setOp, arg);
+      this.emitBytes(setOp, idx);
     } else {
-      this.emitBytes(getOp, arg);
+      this.emitBytes(getOp, idx);
     }
   }
 
@@ -771,7 +788,7 @@ class Compiler {
       this.error('Too many local variables in function.');
       return;
     }
-    this.locals.push(new Local(name, -1, false));
+    this.locals.push(new Local(name, -1, false, this.compilingConst));
   }
 
   declareVariable(): void {
@@ -798,6 +815,9 @@ class Compiler {
     this.consume(TokenType.TokenIdentifier, errorMessage);
     this.declareVariable();
     if (this.scopeDepth > 0) return 0;
+    if (this.compilingConst) {
+      this.globalConsts.push(this.parser.previous.lexeme);
+    }
     return this.identifierConstant(this.parser.previous.lexeme);
   }
 
@@ -921,6 +941,10 @@ class Compiler {
       this.funDeclaration();
     } else if (this.match(TokenType.TokenLet)) {
       this.varDeclaration();
+    } else if (this.match(TokenType.TokenConst)) {
+      this.compilingConst = true;
+      this.varDeclaration();
+      this.compilingConst = false;
     } else {
       this.statement();
     }
