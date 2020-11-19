@@ -40,6 +40,14 @@ enum OpCode {
   OpMapInit,
   OpArrayMapSet,
   OpArrayMapGet,
+  OpModulo,
+  OpExponent,
+  OpBitwiseAnd,
+  OpBitwiseOr,
+  OpBitwiseNot,
+  OpBitwiseXor,
+  OpBitwiseShiftLeft,
+  OpBitwiseShiftRight,
   OpUnknown,
 }
 

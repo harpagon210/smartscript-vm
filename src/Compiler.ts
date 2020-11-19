@@ -58,6 +58,14 @@ class Compiler {
     this.rules.set(TokenType.TokenDot, new Rule(null, 'dot', Precedence.PrecCall));
     this.rules.set(TokenType.TokenMinus, new Rule('unary', 'binary', Precedence.PrecTerm));
     this.rules.set(TokenType.TokenPlus, new Rule(null, 'binary', Precedence.PrecTerm));
+    this.rules.set(TokenType.TokenModulo, new Rule(null, 'binary', Precedence.PrecTerm));
+    this.rules.set(TokenType.TokenExponent, new Rule(null, 'binary', Precedence.PrecTerm));
+    this.rules.set(TokenType.TokenBitwiseAnd, new Rule(null, 'binary', Precedence.PrecTerm));
+    this.rules.set(TokenType.TokenBitwiseOr, new Rule(null, 'binary', Precedence.PrecTerm));
+    this.rules.set(TokenType.TokenBitwiseXor, new Rule(null, 'binary', Precedence.PrecTerm));
+    this.rules.set(TokenType.TokenBitwiseNot, new Rule('unary', null, Precedence.PrecNone));
+    this.rules.set(TokenType.TokenBitwiseShiftLeft, new Rule(null, 'binary', Precedence.PrecTerm));
+    this.rules.set(TokenType.TokenBitwiseShiftRight, new Rule(null, 'binary', Precedence.PrecTerm));
     this.rules.set(TokenType.TokenSemicolon, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenColon, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenSlash, new Rule(null, 'binary', Precedence.PrecFactor));
@@ -422,6 +430,7 @@ class Compiler {
     switch (operatorType) {
       case TokenType.TokenBang: this.emitByte(OpCode.OpNot); break;
       case TokenType.TokenMinus: this.emitByte(OpCode.OpNegate); break;
+      case TokenType.TokenBitwiseNot: this.emitByte(OpCode.OpBitwiseNot); break;
       default:
     }
   }
@@ -446,6 +455,14 @@ class Compiler {
       case TokenType.TokenMinus: this.emitByte(OpCode.OpSubtract); break;
       case TokenType.TokenStar: this.emitByte(OpCode.OpMultiply); break;
       case TokenType.TokenSlash: this.emitByte(OpCode.OpDivide); break;
+      case TokenType.TokenModulo: this.emitByte(OpCode.OpModulo); break;
+      case TokenType.TokenExponent: this.emitByte(OpCode.OpExponent); break;
+      case TokenType.TokenBitwiseAnd: this.emitByte(OpCode.OpBitwiseAnd); break;
+      case TokenType.TokenBitwiseOr: this.emitByte(OpCode.OpBitwiseOr); break;
+      case TokenType.TokenBitwiseNot: this.emitByte(OpCode.OpBitwiseNot); break;
+      case TokenType.TokenBitwiseXor: this.emitByte(OpCode.OpBitwiseXor); break;
+      case TokenType.TokenBitwiseShiftLeft: this.emitByte(OpCode.OpBitwiseShiftLeft); break;
+      case TokenType.TokenBitwiseShiftRight: this.emitByte(OpCode.OpBitwiseShiftRight); break;
       default:
       //  Unreachable.
     }

@@ -200,6 +200,27 @@ class VM {
       case '>':
         res = a.val > b.val;
         break;
+      case '%':
+        res = a.val % b.val;
+        break;
+      case '**':
+        res = a.val ** b.val;
+        break;
+      case '&':
+        res = a.val & b.val;
+        break;
+      case '|':
+        res = a.val | b.val;
+        break;
+      case '^':
+        res = a.val ^ b.val;
+        break;
+      case '<<':
+        res = a.val << b.val;
+        break;
+      case '>>':
+        res = a.val >> b.val;
+        break;
       default:
         break;
     }
@@ -590,6 +611,34 @@ class VM {
           this.binaryOp('/');
           break;
         }
+        case OpCode.OpModulo: {
+          this.binaryOp('%');
+          break;
+        }
+        case OpCode.OpExponent: {
+          this.binaryOp('**');
+          break;
+        }
+        case OpCode.OpBitwiseAnd: {
+          this.binaryOp('&');
+          break;
+        }
+        case OpCode.OpBitwiseOr: {
+          this.binaryOp('|');
+          break;
+        }
+        case OpCode.OpBitwiseXor: {
+          this.binaryOp('^');
+          break;
+        }
+        case OpCode.OpBitwiseShiftLeft: {
+          this.binaryOp('<<');
+          break;
+        }
+        case OpCode.OpBitwiseShiftRight: {
+          this.binaryOp('>>');
+          break;
+        }
         case OpCode.OpNot: {
           let result = false;
           const pop = this.pop();
@@ -608,6 +657,15 @@ class VM {
           }
 
           this.push(new ObjNumber((this.pop() as ObjNumber).val * -1n));
+          break;
+        }
+        case OpCode.OpBitwiseNot: {
+          if (!(this.peek(0) instanceof ObjNumber)) {
+            this.runtimeError('Operand must be a number.');
+            return InterpretResult.InterpretRuntimeError;
+          }
+
+          this.push(new ObjNumber(~(this.pop() as ObjNumber).val));
           break;
         }
         case OpCode.OpPrint: {

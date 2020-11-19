@@ -14,6 +14,11 @@ const enum TokenType {
   TokenColon,
   TokenSlash,
   TokenStar,
+  TokenModulo,
+  TokenBitwiseXor,
+  TokenBitwiseNot,
+  TokenBitwiseAnd,
+  TokenBitwiseOr,
 
   // One or two character tokens.
   TokenBang,
@@ -24,6 +29,9 @@ const enum TokenType {
   TokenGreaterEqual,
   TokenLess,
   TokenLessEqual,
+  TokenExponent,
+  TokenBitwiseShiftLeft,
+  TokenBitwiseShiftRight,
 
   // Literals.
   TokenIdentifier,

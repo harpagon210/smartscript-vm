@@ -121,7 +121,6 @@ class Scanner {
 
   identifierType(): TokenType {
     switch (this.source[this.start]) {
-      case 'a': return this.checkKeyword(1, 2, 'nd', TokenType.TokenAnd);
       case 'c': return this.checkKeyword(1, 4, 'lass', TokenType.TokenClass);
       case 'e':
         if (this.current - this.start > 1) {
@@ -156,7 +155,6 @@ class Scanner {
         } else {
           return TokenType.TokenIdentifier;
         }
-      case 'o': return this.checkKeyword(1, 1, 'r', TokenType.TokenOr);
       case 'p': return this.checkKeyword(1, 4, 'rint', TokenType.TokenPrint);
       case 'r': return this.checkKeyword(1, 5, 'eturn', TokenType.TokenReturn);
       case 's': return this.checkKeyword(1, 4, 'uper', TokenType.TokenSuper);
@@ -206,20 +204,38 @@ class Scanner {
       case '-': return this.makeToken(TokenType.TokenMinus);
       case '+': return this.makeToken(TokenType.TokenPlus);
       case '/': return this.makeToken(TokenType.TokenSlash);
-      case '*': return this.makeToken(TokenType.TokenStar);
+      case '%': return this.makeToken(TokenType.TokenModulo);
+      case '^': return this.makeToken(TokenType.TokenBitwiseXor);
+      case '~': return this.makeToken(TokenType.TokenBitwiseNot);
+      case '*': return this.makeToken(this.match('*') ? TokenType.TokenExponent : TokenType.TokenStar);
       case '!':
         return this.makeToken(this.match('=') ? TokenType.TokenBangEqual : TokenType.TokenBang);
       case '=':
         return this.makeToken(this.match('=') ? TokenType.TokenEqualEqual : TokenType.TokenEqual);
       case '<':
-        return this.makeToken(this.match('=') ? TokenType.TokenLessEqual : TokenType.TokenLess);
+        if (this.match('=')) {
+          return this.makeToken(TokenType.TokenLessEqual);
+        } else if (this.match('<')) {
+          return this.makeToken(TokenType.TokenBitwiseShiftLeft);
+        } else {
+          return this.makeToken(TokenType.TokenLess)
+        }
       case '>':
-        return this.makeToken(this.match('=')
-          ? TokenType.TokenGreaterEqual : TokenType.TokenGreater);
+        if (this.match('=')) {
+          return this.makeToken(TokenType.TokenGreaterEqual);
+        } else if (this.match('>')) {
+          return this.makeToken(TokenType.TokenBitwiseShiftRight);
+        } else {
+          return this.makeToken(TokenType.TokenGreater)
+        }
       case '"':
         return this.string('"');
       case "'":
         return this.string("'");
+      case '&':
+        return this.makeToken(this.match('&') ? TokenType.TokenAnd : TokenType.TokenBitwiseAnd);
+      case '|':
+        return this.makeToken(this.match('|') ? TokenType.TokenOr : TokenType.TokenBitwiseOr);
       default:
         return this.errorToken('Unexpected character.');
     }
