@@ -123,7 +123,8 @@ class VM {
 
     if (process.env.BENCHMARK === 'true') {
       const res = await this.run();
-
+      // eslint-disable-next-line no-console
+      console.log('OpCode,Count,Total,Min,Max');
       this.benchmarks.forEach((vals: Array<number>, key: OpCode) => {
         const len = vals.length;
 
@@ -902,12 +903,12 @@ class VM {
 
       if (process.env.BENCHMARK === 'true') {
         // benchmarks
-        const benchmark = this.benchmarks.get(instruction);
+        let benchmark = this.benchmarks.get(instruction);
         if (!benchmark) {
           this.benchmarks.set(instruction, []);
-        } else {
-          benchmark.push((performance.now() - start) * 1000);
+          benchmark = this.benchmarks.get(instruction);
         }
+        benchmark.push((performance.now() - start) * 1000);
       }
     }
   }
