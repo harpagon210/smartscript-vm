@@ -1,26 +1,14 @@
-import { VM } from '../src/index';
+import { VM } from "../src";
 
-const code: string = "const msg = 'fisrt build';";
-
-describe('testing src/index.ts', () => {
+describe('bootstrap', () => {
   it('should compile normally', () => {
+    const code: string = `
+      print('test');
+      print(3);
+      print(true);
+      print(null);
+    `;
     const interpreter = new VM()
     interpreter.interpret(code);
-  })
-
-  it.skip('should support sandbox mode', () => {
-    const interpreter = new VM()
-    let error;
-    
-    try {
-      interpreter.interpret(`
-      this.y2 = 6n
-    `)
-
-    } catch (err) {
-      error = err
-    }
-
-    expect(error).toBeInstanceOf(TypeError)
   })
 })

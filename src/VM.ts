@@ -136,7 +136,7 @@ class VM {
     this.stack.push(obj);
   }
 
-  private pop(): Obj {
+  public pop(): Obj {
     return this.stack.pop();
   }
 

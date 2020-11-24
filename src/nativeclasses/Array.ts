@@ -163,4 +163,20 @@ ArrayClass.setMethod('shift', (vm: VM, argCount: number) => {
   return false;
 });
 
+ArrayClass.setMethod('clear', (vm: VM, argCount: number) => {
+  const instance = vm.stack[vm.stack.length - argCount - 1];
+  if (instance instanceof ObjInstance && instance.klass.name === 'Array') {
+    const array = instance.getField('array');
+    if (array instanceof ObjArray) {
+      array.clear();
+      return new ObjNull();
+    }
+
+    vm.runtimeError('array is not an instance of ObjArray');
+    return false;
+  }
+  vm.runtimeError('Object is not an instance of Array');
+  return false;
+});
+
 export default ArrayClass;
