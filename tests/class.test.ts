@@ -109,4 +109,29 @@ describe('class', () => {
       expect(result.klass.getMethod('MethodA') instanceof ObjClosure).toBeTruthy();
     }
   })
+
+  it('should call method on an instance', async () => {
+    const vm = new VM();
+
+    let result: any;
+    const setResultFn = () => {
+      result = vm.pop();
+      return new ObjNull();
+    };
+    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+
+    await vm.interpret(`
+      class ClassA {
+        MethodA() {
+          return 'a';
+        }
+      }
+
+      let instance = new ClassA();
+      print(instance.MethodA);
+      setResult(instance.MethodA());
+    `)
+
+    expect(result).toEqual(new ObjString('a'));
+  })
 })

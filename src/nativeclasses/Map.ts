@@ -50,6 +50,16 @@ MapClass.setMethod('get', (vm: VM, argCount: number, key: Obj) => {
   return false;
 });
 
+MapClass.setMethod('delete', (vm: VM, argCount: number, key: Obj) => {
+  const instance = vm.stack[vm.stack.length - argCount - 1];
+  if (instance instanceof ObjInstance && instance.klass.name === 'Map') {
+    const name = key.asString();
+    return instance.deleteField(name);
+  }
+  vm.runtimeError('Object is not an instance of Map');
+  return false;
+});
+
 MapClass.setMethod('has', (vm: VM, argCount: number, key: Obj) => {
   const instance = vm.stack[vm.stack.length - argCount - 1];
   if (instance instanceof ObjInstance && instance.klass.name === 'Map') {

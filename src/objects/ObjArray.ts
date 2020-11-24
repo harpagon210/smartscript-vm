@@ -42,14 +42,14 @@ class ObjArray implements Obj {
   }
 
   asString(): string {
-    let output: string = 'array[';
+    let output: string = 'Array [ ';
     for (let index = 0; index < this.val.length; index += 1) {
       if (index > 0) {
-        output += ',';
+        output += ', ';
       }
       output += `${this.val[index].asString()}`;
     }
-    output += ']';
+    output += ' ]';
     return output;
   }
 }

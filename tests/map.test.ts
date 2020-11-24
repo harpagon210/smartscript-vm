@@ -1,8 +1,8 @@
-import { VM, ObjNull, ObjNativeFunction, ObjInstance, ObjArray, ObjNumber } from "../src";
+import { VM, ObjNull, ObjNativeFunction, ObjInstance, ObjString, ObjNativeClass, ObjBool } from "../src";
 
-describe('array', () => {
+describe('map', () => {
 
-  it('should create an instance of Array', async () => {
+  it('should create an instance of Map', async () => {
     const vm = new VM();
 
     let result: any;
@@ -13,13 +13,13 @@ describe('array', () => {
     vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
 
     await vm.interpret(`
-      const a = [];
+      const a = {};
       setResult(a);
     `)
 
     expect(result instanceof ObjInstance).toBeTruthy();
     if (result instanceof ObjInstance) {
-      expect(result.klass.name).toEqual('Array');
+      expect(result.klass.name).toEqual('Map');
     }
 
     const vm2 = new VM();
@@ -32,13 +32,13 @@ describe('array', () => {
     vm2.setGlobal('setResult', new ObjNativeFunction(setResultFn2, 'setResult'));
 
     await vm2.interpret(`
-      const a = new Array();
+      const a = new Map();
       setResult(a);
     `)
 
     expect(result2 instanceof ObjInstance).toBeTruthy();
     if (result2 instanceof ObjInstance) {
-      expect(result2.klass.name).toEqual('Array');
+      expect(result2.klass.name).toEqual('Map');
     }
   })
 
@@ -53,19 +53,13 @@ describe('array', () => {
     vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
 
     await vm.interpret(`
-      const a = [];
-      a.push(1);
-      a.set(0, 2);
+      const a = { testKey: 'testVal' };
       setResult(a);
     `)
 
     expect(result instanceof ObjInstance).toBeTruthy();
     if (result instanceof ObjInstance) {
-      const array = result.getField('array');
-      expect(array instanceof ObjArray).toBeTruthy();
-      if (array instanceof ObjArray) {
-        expect(array.get(0)).toEqual(new ObjNumber(2n));
-      }
+      expect(result.getField('testKey')).toEqual(new ObjString('testVal'))
     }
 
     const vm2 = new VM();
@@ -78,49 +72,38 @@ describe('array', () => {
     vm2.setGlobal('setResult', new ObjNativeFunction(setResultFn2, 'setResult'));
 
     await vm2.interpret(`
-      const a = [];
-      a.push(1);
-      a[0] = 2;
+      const a = new Map();
+      a.set('testKey', 'testVal');
       setResult(a);
     `)
 
     expect(result2 instanceof ObjInstance).toBeTruthy();
     if (result2 instanceof ObjInstance) {
-      const array = result2.getField('array');
-      expect(array instanceof ObjArray).toBeTruthy();
-      if (array instanceof ObjArray) {
-        expect(array.get(0)).toEqual(new ObjNumber(2n));
-      }
+      expect(result2.getField('testKey')).toEqual(new ObjString('testVal'))
     }
-  })
 
-  it('should push a value', async () => {
-    const vm = new VM();
+    const vm3 = new VM();
 
-    let result: any;
-    const setResultFn = () => {
-      result = vm.pop();
+    let result3: any;
+    const setResultFn3 = () => {
+      result3 = vm3.pop();
       return new ObjNull();
     };
-    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+    vm3.setGlobal('setResult', new ObjNativeFunction(setResultFn3, 'setResult'));
 
-    await vm.interpret(`
-      const a = [];
-      a.push(2);
+    await vm3.interpret(`
+      const a = new Map();
+      a['testKey'] = 'testVal';
       setResult(a);
     `)
 
-    expect(result instanceof ObjInstance).toBeTruthy();
-    if (result instanceof ObjInstance) {
-      const array = result.getField('array');
-      expect(array instanceof ObjArray).toBeTruthy();
-      if (array instanceof ObjArray) {
-        expect(array.get(0)).toEqual(new ObjNumber(2n));
-      }
+    expect(result3 instanceof ObjInstance).toBeTruthy();
+    if (result3 instanceof ObjInstance) {
+      expect(result3.getField('testKey')).toEqual(new ObjString('testVal'))
     }
   })
 
-  it('should pop a value', async () => {
+  it('should get a value', async () => {
     const vm = new VM();
 
     let result: any;
@@ -131,37 +114,31 @@ describe('array', () => {
     vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
 
     await vm.interpret(`
-      const a = [];
-      a.push(2);
-      const t = a.pop();
-      setResult(t);
+      const a = { testKey: 'testVal' };
+      setResult(a.get('testKey'));
     `)
 
-    expect(result).toEqual(new ObjNumber(2n));
-  })
+    expect(result).toEqual(new ObjString('testVal'))
 
-  it('should unshift a value', async () => {
-    const vm = new VM();
+    const vm2 = new VM();
 
-    let result: any;
-    const setResultFn = () => {
-      result = vm.pop();
+    let result2: any;
+    const setResultFn2 = () => {
+      result2 = vm2.pop();
       return new ObjNull();
     };
-    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+    vm2.setGlobal('setResult', new ObjNativeFunction(setResultFn2, 'setResult'));
 
-    await vm.interpret(`
-      const a = [];
-      a.push(2);
-      a.unshift(3);
-      const t = a[0];
-      setResult(t);
+    await vm2.interpret(`
+      const a = new Map();
+      a.set('testKey', 'testVal');
+      setResult(a['testKey']);
     `)
 
-    expect(result).toEqual(new ObjNumber(3n));
+    expect(result2).toEqual(new ObjString('testVal'))
   })
 
-  it('should shift a value', async () => {
+  it('should check if the Map has a value', async () => {
     const vm = new VM();
 
     let result: any;
@@ -172,17 +149,31 @@ describe('array', () => {
     vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
 
     await vm.interpret(`
-      const a = [];
-      a.push(2);
-      a.push(3);
-      const t = a.shift();
-      setResult(t);
+      const a = { testKey: 'testVal' };
+      setResult(a.has('testKey'));
     `)
 
-    expect(result).toEqual(new ObjNumber(2n));
+    expect(result).toEqual(new ObjBool(true))
+
+    const vm2 = new VM();
+
+    let result2: any;
+    const setResultFn2 = () => {
+      result2 = vm2.pop();
+      return new ObjNull();
+    };
+    vm2.setGlobal('setResult', new ObjNativeFunction(setResultFn2, 'setResult'));
+
+    await vm2.interpret(`
+      const a = new Map();
+      a.set('testKey', 'testVal');
+      setResult(a.has('testKey2'));
+    `)
+
+    expect(result2).toEqual(new ObjBool(false))
   })
 
-  it('should clear a array', async () => {
+  it('should delete a key', async () => {
     const vm = new VM();
 
     let result: any;
@@ -193,23 +184,34 @@ describe('array', () => {
     vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
 
     await vm.interpret(`
-      const a = [];
-      a.push(2);
+      const a = { testKey: 'testVal' };
+      a.delete('testKey');
+      setResult(a.has('testKey'));
+    `)
+
+    expect(result).toEqual(new ObjBool(false))
+  })
+
+  it('should clear a Map', async () => {
+    const vm = new VM();
+
+    let result: any;
+    const setResultFn = () => {
+      result = vm.pop();
+      return new ObjNull();
+    };
+    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+
+    await vm.interpret(`
+      const a = { testKey: 'testVal', testKey2: 'testVal2' };
       a.clear();
-      setResult(a);
+      setResult(a.has('testKey2'));
     `)
 
-    expect(result instanceof ObjInstance).toBeTruthy();
-    if (result instanceof ObjInstance) {
-      const array = result.getField('array');
-      expect(array instanceof ObjArray).toBeTruthy();
-      if (array instanceof ObjArray) {
-        expect(array.length()).toEqual(0);
-      }
-    }
+    expect(result).toEqual(new ObjBool(false))
   })
 
-  it('should print an array', async () => {
+  it('should print a map', async () => {
     const vm = new VM();
 
     let result: any;
@@ -220,18 +222,36 @@ describe('array', () => {
     vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
 
     await vm.interpret(`
-      const a = [1, 2];
-      print(a);
+      const a = new Map();
+      a['testKey'] = 'testVal';
       setResult(a);
     `)
 
     expect(result instanceof ObjInstance).toBeTruthy();
     if (result instanceof ObjInstance) {
-      const array = result.getField('array');
-      expect(array instanceof ObjArray).toBeTruthy();
-      if (array instanceof ObjArray) {
-        expect(array.asString()).toEqual('Array [ 1, 2 ]');
-      }
+      expect((result.klass as ObjNativeClass).asStringNative(result)).toEqual('Map { testKey: testVal }');
+    }
+  })
+
+  it('should print a map', async () => {
+    const vm = new VM();
+
+    let result: any;
+    const setResultFn = () => {
+      result = vm.pop();
+      return new ObjNull();
+    };
+    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+
+    await vm.interpret(`
+      const a = new Map();
+      a['testKey'] = 'testVal';
+      setResult(a);
+    `)
+
+    expect(result instanceof ObjInstance).toBeTruthy();
+    if (result instanceof ObjInstance) {
+      expect((result.klass as ObjNativeClass).asStringNative(result)).toEqual('Map { testKey: testVal }');
     }
   })
 })
