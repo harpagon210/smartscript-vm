@@ -140,11 +140,21 @@ class Scanner {
 
   identifierType(): TokenType {
     switch (this.source[this.start]) {
+      case 'b': return this.checkKeyword(1, 4, 'reak', TokenType.TokenBreak);
       case 'c':
         if (this.current - this.start > 1) {
           switch (this.source[this.start + 1]) {
             case 'l': return this.checkKeyword(2, 3, 'ass', TokenType.TokenClass);
-            case 'o': return this.checkKeyword(2, 3, 'nst', TokenType.TokenConst);
+            case 'o':
+              if (this.source[this.start + 2] === 'n') {
+                switch (this.source[this.start + 3]) {
+                  case 's': return this.checkKeyword(4, 1, 't', TokenType.TokenConst);
+                  case 't': return this.checkKeyword(4, 4, 'inue', TokenType.TokenContinue);
+                  default: return TokenType.TokenIdentifier;
+                }
+              } else {
+                return TokenType.TokenIdentifier;
+              }
             default: return TokenType.TokenIdentifier;
           }
         } else {

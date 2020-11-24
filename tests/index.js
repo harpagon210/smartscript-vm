@@ -2,7 +2,7 @@ const fs = require('fs');
 const { VM, InterpretResult } = require('../dist/index');
 
 process.env.DEBUG_TRACE_EXECUTION = 'tru';
-process.env.DEBUG_PRINT_CODE = 'true';
+process.env.DEBUG_PRINT_CODE = 'tru';
 process.env.BENCHMARK = 'tru';
 
 async function run() {

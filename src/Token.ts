@@ -44,6 +44,8 @@ const enum TokenType {
   TokenElse,
   TokenFalse,
   TokenFor,
+  TokenBreak,
+  TokenContinue,
   TokenFunction,
   TokenIf,
   TokenNull,

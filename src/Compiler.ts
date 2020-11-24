@@ -30,6 +30,10 @@ class Compiler {
 
   scopeDepth: number;
 
+  innermostLoopStart: number;
+
+  innermostLoopScopeDepth: number;
+
   func: ObjFunction;
 
   currentClass: ClassCompiler;
@@ -37,6 +41,8 @@ class Compiler {
   compilingConst: boolean;
 
   globalConsts: Array<string>;
+
+  breakStatements: Array<number>;
 
   rules: Map<TokenType, Rule>;
 
@@ -47,11 +53,14 @@ class Compiler {
     this.enclosing = enclosing || null;
     this.locals = [];
     this.scopeDepth = 0;
+    this.innermostLoopStart = -1;
+    this.innermostLoopScopeDepth = 0;
     this.func = new ObjFunction();
     this.type = type;
     this.currentClass = enclosing ? enclosing.currentClass : null;
     this.compilingConst = false;
     this.globalConsts = [];
+    this.breakStatements = [];
 
     this.rules = new Map<TokenType, Rule>();
     this.rules.set(TokenType.TokenLeftParen, new Rule('grouping', 'call', Precedence.PrecCall));
@@ -93,6 +102,8 @@ class Compiler {
     this.rules.set(TokenType.TokenElse, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenFalse, new Rule('literal', null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenFor, new Rule(null, null, Precedence.PrecNone));
+    this.rules.set(TokenType.TokenBreak, new Rule(null, null, Precedence.PrecNone));
+    this.rules.set(TokenType.TokenContinue, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenFunction, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenIf, new Rule(null, null, Precedence.PrecNone));
     this.rules.set(TokenType.TokenNull, new Rule('literal', null, Precedence.PrecNone));
@@ -684,7 +695,10 @@ class Compiler {
       this.expressionStatement();
     }
 
-    let loopStart = this.currentChunk().code.length;
+    const surroundingLoopStart = this.innermostLoopStart;
+    const surroundingLoopScopeDepth = this.innermostLoopScopeDepth;
+    this.innermostLoopStart = this.currentChunk().code.length;
+    this.innermostLoopScopeDepth = this.scopeDepth;
 
     let exitJump = -1;
     if (!this.match(TokenType.TokenSemicolon)) {
@@ -704,21 +718,66 @@ class Compiler {
       this.emitByte(OpCode.OpPop);
       this.consume(TokenType.TokenRightParen, "Expect ')' after for clauses.");
 
-      this.emitLoop(loopStart);
-      loopStart = incrementStart;
+      this.emitLoop(this.innermostLoopStart);
+      this.innermostLoopStart = incrementStart;
       this.patchJump(bodyJump);
     }
 
     this.statement();
 
-    this.emitLoop(loopStart);
+    this.emitLoop(this.innermostLoopStart);
 
     if (exitJump !== -1) {
       this.patchJump(exitJump);
       this.emitByte(OpCode.OpPop); // Condition.
     }
 
+    for (let index = 0; index < this.breakStatements.length; index += 1) {
+      const breakStatement = this.breakStatements[index];
+      this.patchJump(breakStatement);
+    }
+
+    this.innermostLoopStart = surroundingLoopStart;
+    this.innermostLoopScopeDepth = surroundingLoopScopeDepth;
+    this.breakStatements = [];
+
     this.endScope();
+  }
+
+  continueStatement(): void {
+    if (this.innermostLoopStart === -1) {
+      this.error("Can't use 'continue' outside of a loop.");
+    }
+
+    this.consume(TokenType.TokenSemicolon, "Expect ';' after 'continue'.");
+
+    // Discard any locals created inside the loop.
+    for (let i = this.locals.length - 1;
+      i >= 0 && this.locals[i].depth > this.innermostLoopScopeDepth;
+      i -= 1) {
+      this.emitByte(OpCode.OpPop);
+    }
+
+    // Jump to top of current innermost loop.
+    this.emitLoop(this.innermostLoopStart);
+  }
+
+  breakStatement(): void {
+    if (this.innermostLoopStart === -1) {
+      this.error("Can't use 'break' outside of a loop.");
+    }
+
+    this.consume(TokenType.TokenSemicolon, "Expect ';' after 'break'.");
+
+    // Discard any locals created inside the loop.
+    for (let i = this.locals.length - 1;
+      i >= 0 && this.locals[i].depth > this.innermostLoopScopeDepth;
+      i -= 1) {
+      this.emitByte(OpCode.OpPop);
+    }
+
+    // Jump out of the loop
+    this.breakStatements.push(this.emitJump(OpCode.OpJump));
   }
 
   returnStatement(): void {
@@ -769,6 +828,10 @@ class Compiler {
       this.printStatement();
     } else if (this.match(TokenType.TokenFor)) {
       this.forStatement();
+    } else if (this.match(TokenType.TokenContinue)) {
+      this.continueStatement();
+    } else if (this.match(TokenType.TokenBreak)) {
+      this.breakStatement();
     } else if (this.match(TokenType.TokenIf)) {
       this.ifStatement();
     } else if (this.match(TokenType.TokenReturn)) {
