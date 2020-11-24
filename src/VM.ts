@@ -57,51 +57,15 @@ class VM {
     this.frames = [];
     this.openUpValues = null;
 
-    // START NATIVE FUNCTIONS
+    // START NATIVE FUNCTIONS/CLASSES
 
     const clock = () => new ObjNumber(BigInt(Math.round(performance.now())));
 
     this.defineNative('clock', new ObjNativeFunction(clock, 'clock'));
-
-    const wait = () => new Promise((resolve) => {
-      setTimeout(() => resolve(new ObjString('HOLA!')), 3000);
-    });
-
-    this.defineNative('wait', new ObjNativeFunction(wait, 'wait'));
     this.setGlobal('Map', MapClass);
     this.setGlobal('Array', ArrayClass);
 
-    const ApiClass = new ObjNativeClass('Api');
-
-    ApiClass.asStringNative = () => 'API';
-    const apiInstance = new ObjInstance(ApiClass);
-    apiInstance.setField('sender', new ObjString('Harpagon'));
-    apiInstance.setField('action', new ObjString('testAction2'));
-    const params = new ObjInstance(MapClass);
-    params.setField('nb', new ObjNumber(3n));
-    apiInstance.setField('params', params);
-
-    this.setGlobal('Api', apiInstance);
-
-    /*
-    const stringClass = new ObjNativeClass('String');
-    stringClass.
-    setMethod('test',
-    (arg1, arg2) => new Value(VALUE_TYPE.OBJ_VAL, new ObjString(arg2.asString())));
-
-    stringClass.setMethod('constructor', (argCount, string) => {
-      // get instance
-      const instance = this.stack[this.stack.length - argCount - 1];
-      const ins = instance.asObj();
-      if (ins instanceof ObjInstance) {
-        ins.setField('str', string);
-      }
-
-      return true;
-    });
-    this.setGlobal('String', new Value(VALUE_TYPE.OBJ_VAL, stringClass));
-    */
-    // END NATIVE FUNCTIONS
+    // END NATIVE FUNCTIONS/CLASSES
 
     this.benchmarks = new Map<OpCode, Array<number>>();
   }
@@ -176,7 +140,7 @@ class VM {
     return this.stack.pop();
   }
 
-  private setGlobal(key: string, obj: Obj): boolean {
+  public setGlobal(key: string, obj: Obj): boolean {
     const isNewKey = !this.globals.has(key);
     this.globals.set(key, obj);
     return isNewKey;
