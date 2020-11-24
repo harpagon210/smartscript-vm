@@ -599,14 +599,9 @@ class Compiler {
     this.currentChunk().code[offset] = jump;
   }
 
-  emitJump(instruction: OpCode, offset?: number): number {
-    if (offset) {
-      this.emitByte(instruction);
-      this.emitByte(offset);
-    } else {
-      this.emitByte(instruction);
-      this.emitByte(0);
-    }
+  emitJump(instruction: OpCode): number {
+    this.emitByte(instruction);
+    this.emitByte(0);
 
     return this.currentChunk().code.length - 1;
   }
@@ -636,7 +631,11 @@ class Compiler {
     this.emitByte(OpCode.OpPop);
 
     if (this.match(TokenType.TokenElse)) {
-      this.statement();
+      if (this.match(TokenType.TokenIf)) {
+        this.ifStatement();
+      } else {
+        this.statement();
+      }
     }
     this.patchJump(elseJump);
   }
@@ -668,8 +667,9 @@ class Compiler {
     this.expression();
     this.consume(TokenType.TokenRightParen, "Expect ')' after condition.");
     this.consume(TokenType.TokenSemicolon, "Expect ';' after loop condition.");
-    this.emitJump(OpCode.OpJumpIfFalse, 2);
+    const exitJump = this.emitJump(OpCode.OpJumpIfFalse);
     this.emitLoop(loopStart);
+    this.patchJump(exitJump);
     this.emitByte(OpCode.OpPop);
   }
 

@@ -70,6 +70,19 @@ class VM {
     this.defineNative('wait', new ObjNativeFunction(wait, 'wait'));
     this.setGlobal('Map', MapClass);
     this.setGlobal('Array', ArrayClass);
+
+    const ApiClass = new ObjNativeClass('Api');
+
+    ApiClass.asStringNative = () => 'API';
+    const apiInstance = new ObjInstance(ApiClass);
+    apiInstance.setField('sender', new ObjString('Harpagon'));
+    apiInstance.setField('action', new ObjString('testAction2'));
+    const params = new ObjInstance(MapClass);
+    params.setField('nb', new ObjNumber(3n));
+    apiInstance.setField('params', params);
+
+    this.setGlobal('Api', apiInstance);
+
     /*
     const stringClass = new ObjNativeClass('String');
     stringClass.
