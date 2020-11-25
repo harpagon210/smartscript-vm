@@ -190,22 +190,25 @@ describe('array', () => {
   it('should shift a value', async () => {
     const vm = new VM();
 
-    let result: any;
-    const setResultFn = () => {
-      result = vm.pop();
+    let results: Array<any> = [];
+    const addResultFn = () => {
+      results.push(vm.pop());
       return new ObjNull();
     };
-    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+    vm.setGlobal('addResult', new ObjNativeFunction(addResultFn, 'addResult'));
 
     await vm.interpret(`
       const a = [];
       a.push(2);
       a.push(3);
-      const t = a.shift();
-      setResult(t);
+      addResult(a.shift());
+      addResult(a.shift());
+      addResult(a.shift());
     `)
 
-    expect(result).toEqual(new ObjNumber(2n));
+    expect(results[0]).toEqual(new ObjNumber(2n));
+    expect(results[1]).toEqual(new ObjNumber(3n));
+    expect(results[2]).toEqual(new ObjNull());
   })
 
   it('should clear a array', async () => {
@@ -345,6 +348,56 @@ describe('array', () => {
     arrayInstance.setField('array', new ObjNull())
     vm.stack.push(arrayInstance);
     result = popMethod(vm, 0);
+
+    expect(result).toBeFalsy();
+    expect(vm.stackTrace).toEqual('runtime exception: array is not an instance of ObjArray');
+
+    vm = new VM();
+    const unshiftMethod = ArrayClass.getMethod('unshift');
+    vm.stack.push(mapInstance);
+    vm.stack.push(new ObjNull());
+    result = unshiftMethod(vm, 1);
+
+    expect(result).toBeFalsy();
+    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Array');
+
+    vm = new VM();
+    arrayInstance = new ObjInstance(ArrayClass);
+    arrayInstance.setField('array', new ObjNull())
+    vm.stack.push(arrayInstance);
+    vm.stack.push(val);
+    result = unshiftMethod(vm, 1, val);
+
+    expect(result).toBeFalsy();
+    expect(vm.stackTrace).toEqual('runtime exception: array is not an instance of ObjArray');
+
+    vm = new VM();
+    const shiftMethod = ArrayClass.getMethod('shift');
+    vm.stack.push(mapInstance);
+    result = shiftMethod(vm, 0);
+
+    expect(result).toBeFalsy();
+    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Array');
+
+    vm = new VM();
+    arrayInstance = new ObjInstance(ArrayClass);
+    arrayInstance.setField('array', new ObjNull())
+    vm.stack.push(arrayInstance);
+    result = shiftMethod(vm, 0);
+
+    vm = new VM();
+    const clearMethod = ArrayClass.getMethod('clear');
+    vm.stack.push(mapInstance);
+    result = clearMethod(vm, 0);
+
+    expect(result).toBeFalsy();
+    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Array');
+
+    vm = new VM();
+    arrayInstance = new ObjInstance(ArrayClass);
+    arrayInstance.setField('array', new ObjNull())
+    vm.stack.push(arrayInstance);
+    result = clearMethod(vm, 0);
 
     expect(result).toBeFalsy();
     expect(vm.stackTrace).toEqual('runtime exception: array is not an instance of ObjArray');
