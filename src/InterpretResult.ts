@@ -1,5 +1,6 @@
 enum InterpretResult {
-  InterpretOk,
+  InterpretCompileOk,
+  InterpretRuntimeOk,
   InterpretCompileError,
   InterpretRuntimeError,
 }

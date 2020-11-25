@@ -143,7 +143,7 @@ describe('closures', () => {
   })
 
   it('should print main closure and function name', async () => {
-    const func = VM.compile('function test () {}');
+    const { func } = VM.compile('function test () {}');
     const closure = new ObjClosure(func);
     expect(func.chunk.constants[1].asString()).toEqual('<function test>');
     expect(closure.asString()).toEqual('<closure main script>');

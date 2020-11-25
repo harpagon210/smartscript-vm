@@ -24,7 +24,7 @@ describe('binary operations', () => {
     const result = await vm.interpret('true + false;')
 
     expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
-    expect(result.stackTrace).toEqual(`runtime exception: Operands must be two numbers or two strings.
+    expect(result.errors).toEqual(`runtime exception: Operands must be two numbers or two strings.
 [line 1] in main script`);
   })
 

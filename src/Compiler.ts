@@ -14,6 +14,7 @@ import Obj from './objects/Obj';
 import UpValue from './UpValue';
 import ObjNumber from './objects/ObjNumber';
 import ObjString from './objects/ObjString';
+import InterpretResult from './InterpretResult';
 
 class Compiler {
   source: string;
@@ -43,6 +44,8 @@ class Compiler {
   globalConsts: Array<string>;
 
   breakStatements: Array<number>;
+
+  errors: string;
 
   rules: Map<TokenType, Rule>;
 
@@ -135,18 +138,17 @@ class Compiler {
   errorAt(token: Token, message: string): void {
     if (this.parser.panicMode) return;
     this.parser.panicMode = true;
-    let output = `[line ${token.line}] Error`;
+    let errors = `[line ${token.line}] Error`;
 
     if (token.type === TokenType.TokenEof) {
-      output = `${output} at end`;
+      errors = `${errors} at end`;
     } else if (token.type === TokenType.TokenError) {
       // Nothing.
     } else {
-      output = `${output} at ${token.lexeme}`;
+      errors = `${errors} at ${token.lexeme}`;
     }
 
-    // eslint-disable-next-line no-console
-    console.error(`${output}: ${message}`);
+    this.errors = `${errors}: ${message}`;
     this.parser.hadError = true;
   }
 
@@ -1063,7 +1065,7 @@ class Compiler {
     }
   }
 
-  compile(): ObjFunction {
+  compile(): { result: InterpretResult, func: ObjFunction, errors: string } {
     this.advance();
 
     while (!this.match(TokenType.TokenEof)) {
@@ -1072,7 +1074,19 @@ class Compiler {
 
     const func = this.endCompiler();
 
-    return this.parser.hadError ? null : func;
+    if (this.parser.hadError) {
+      return {
+        result: InterpretResult.InterpretCompileError,
+        func: null,
+        errors: this.errors,
+      };
+    }
+
+    return {
+      result: InterpretResult.InterpretCompileOk,
+      func,
+      errors: this.errors,
+    };
   }
 }
 

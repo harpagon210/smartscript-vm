@@ -41,7 +41,7 @@ class VM {
 
   chunk: Chunk;
 
-  stackTrace: string;
+  errors: string;
 
   private globals: Map<string, Obj>;
 
@@ -72,26 +72,27 @@ class VM {
     this.benchmarks = new Map<OpCode, Array<number>>();
   }
 
-  static compile(source: string): ObjFunction {
+  static compile(source: string) {
     const scanner = new Scanner(source);
     const compiler = new Compiler(FunctionType.TypeScript, scanner);
-    const func = compiler.compile();
-
-    return func;
+    return compiler.compile();
   }
 
   async interpret(source: string | ObjFunction):
-  Promise<{ result: InterpretResult, stackTrace: string }> {
+  Promise<{ result: InterpretResult, errors: string }> {
     let func: ObjFunction;
+    let compilationResult = null;
     if (source instanceof ObjFunction) {
       func = source;
     } else {
       const scanner = new Scanner(source);
       const compiler = new Compiler(FunctionType.TypeScript, scanner);
-      func = compiler.compile();
+      compilationResult = compiler.compile();
+      func = compilationResult.func;
     }
 
-    if (!func) {
+    if (compilationResult && compilationResult.result === InterpretResult.InterpretCompileError) {
+      this.errors = compilationResult.errors;
       return this.buildInterpretResult(InterpretResult.InterpretCompileError);
     }
 
@@ -348,25 +349,25 @@ class VM {
   }
 
   runtimeError(error: string): void {
-    this.stackTrace = `runtime exception: ${error}`;
+    this.errors = `runtime exception: ${error}`;
     for (let i = this.frames.length - 1; i >= 0; i -= 1) {
       const frame = this.frames[i];
       const { closure } = frame;
       const line = closure.func.chunk.lines[frame.ip];
       if (!closure.func.name) {
-        this.stackTrace += `\n[line ${line}] in main script`;
+        this.errors += `\n[line ${line}] in main script`;
       } else {
-        this.stackTrace += `\n[line ${line}] in ${closure.func.name}()`;
+        this.errors += `\n[line ${line}] in ${closure.func.name}()`;
       }
     }
 
     this.resetStack();
   }
 
-  buildInterpretResult(result: InterpretResult): { result: InterpretResult, stackTrace: string } {
+  buildInterpretResult(result: InterpretResult): { result: InterpretResult, errors: string } {
     return {
       result,
-      stackTrace: this.stackTrace,
+      errors: this.errors,
     };
   }
 
@@ -422,7 +423,7 @@ class VM {
     return true;
   }
 
-  private async run(): Promise<{ result: InterpretResult, stackTrace: string }> {
+  private async run(): Promise<{ result: InterpretResult, errors: string }> {
     for (; ;) {
       let frame = this.frames[this.frames.length - 1];
       const instruction = frame.readByte();
@@ -770,7 +771,7 @@ class VM {
 
           if (this.frames.length === 0) {
             this.pop();
-            return this.buildInterpretResult(InterpretResult.InterpretOk);
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeOk);
           }
 
           while (this.stack.length > frm.slots && this.stack.length > 0) {

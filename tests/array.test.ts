@@ -103,7 +103,7 @@ describe('array', () => {
     `)
 
     expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
-    expect(result.stackTrace).toEqual(`runtime exception: Out of bound 1.
+    expect(result.errors).toEqual(`runtime exception: Out of bound 1.
 [line 2] in main script`);
 
     vm = new VM();
@@ -114,7 +114,7 @@ describe('array', () => {
     `)
 
     expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
-    expect(result.stackTrace).toEqual(`runtime exception: Out of bound 1.
+    expect(result.errors).toEqual(`runtime exception: Out of bound 1.
 [line 2] in main script`);
 
   })
@@ -276,7 +276,7 @@ describe('array', () => {
     let result = setMethod(vm, 2, index, val);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Array');
+    expect(vm.errors).toEqual('runtime exception: Object is not an instance of Array');
 
     vm = new VM();
     let arrayInstance = new ObjInstance(ArrayClass);
@@ -286,7 +286,7 @@ describe('array', () => {
     result = setMethod(vm, 1, index, val);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: array is not an instance of ObjArray');
+    expect(vm.errors).toEqual('runtime exception: array is not an instance of ObjArray');
 
     vm = new VM();
     const getMethod = ArrayClass.getMethod('get');
@@ -295,7 +295,7 @@ describe('array', () => {
     result = getMethod(vm, 1, index);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Array');
+    expect(vm.errors).toEqual('runtime exception: Object is not an instance of Array');
 
     vm = new VM();
     arrayInstance = new ObjInstance(ArrayClass);
@@ -305,7 +305,7 @@ describe('array', () => {
     result = getMethod(vm, 1, index);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: array is not an instance of ObjArray');
+    expect(vm.errors).toEqual('runtime exception: array is not an instance of ObjArray');
 
     vm = new VM();
     const ctorMethod = ArrayClass.getMethod('constructor');
@@ -314,7 +314,7 @@ describe('array', () => {
     result = ctorMethod(vm, 1);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Array');
+    expect(vm.errors).toEqual('runtime exception: Object is not an instance of Array');
 
     vm = new VM();
     const pushMethod = ArrayClass.getMethod('push');
@@ -323,7 +323,7 @@ describe('array', () => {
     result = pushMethod(vm, 1);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Array');
+    expect(vm.errors).toEqual('runtime exception: Object is not an instance of Array');
 
     vm = new VM();
     arrayInstance = new ObjInstance(ArrayClass);
@@ -333,7 +333,7 @@ describe('array', () => {
     result = pushMethod(vm, 1, val);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: array is not an instance of ObjArray');
+    expect(vm.errors).toEqual('runtime exception: array is not an instance of ObjArray');
 
     vm = new VM();
     const popMethod = ArrayClass.getMethod('pop');
@@ -341,7 +341,7 @@ describe('array', () => {
     result = popMethod(vm, 0);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Array');
+    expect(vm.errors).toEqual('runtime exception: Object is not an instance of Array');
 
     vm = new VM();
     arrayInstance = new ObjInstance(ArrayClass);
@@ -350,7 +350,7 @@ describe('array', () => {
     result = popMethod(vm, 0);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: array is not an instance of ObjArray');
+    expect(vm.errors).toEqual('runtime exception: array is not an instance of ObjArray');
 
     vm = new VM();
     const unshiftMethod = ArrayClass.getMethod('unshift');
@@ -359,7 +359,7 @@ describe('array', () => {
     result = unshiftMethod(vm, 1);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Array');
+    expect(vm.errors).toEqual('runtime exception: Object is not an instance of Array');
 
     vm = new VM();
     arrayInstance = new ObjInstance(ArrayClass);
@@ -369,7 +369,7 @@ describe('array', () => {
     result = unshiftMethod(vm, 1, val);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: array is not an instance of ObjArray');
+    expect(vm.errors).toEqual('runtime exception: array is not an instance of ObjArray');
 
     vm = new VM();
     const shiftMethod = ArrayClass.getMethod('shift');
@@ -377,7 +377,7 @@ describe('array', () => {
     result = shiftMethod(vm, 0);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Array');
+    expect(vm.errors).toEqual('runtime exception: Object is not an instance of Array');
 
     vm = new VM();
     arrayInstance = new ObjInstance(ArrayClass);
@@ -391,7 +391,7 @@ describe('array', () => {
     result = clearMethod(vm, 0);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Array');
+    expect(vm.errors).toEqual('runtime exception: Object is not an instance of Array');
 
     vm = new VM();
     arrayInstance = new ObjInstance(ArrayClass);
@@ -400,7 +400,7 @@ describe('array', () => {
     result = clearMethod(vm, 0);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: array is not an instance of ObjArray');
+    expect(vm.errors).toEqual('runtime exception: array is not an instance of ObjArray');
   })
 
   it('index must be an ObjNumber', async () => {
@@ -415,7 +415,7 @@ describe('array', () => {
     let result = setMethod(vm, 2, index, val);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Index testIndex is not number.');
+    expect(vm.errors).toEqual('runtime exception: Index testIndex is not number.');
 
     vm = new VM();
     const getMethod = ArrayClass.getMethod('get');
@@ -425,6 +425,6 @@ describe('array', () => {
     result = getMethod(vm, 2, index);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Index testIndex is not number.');
+    expect(vm.errors).toEqual('runtime exception: Index testIndex is not number.');
   })
 })

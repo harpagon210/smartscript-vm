@@ -147,7 +147,7 @@ describe('map', () => {
     `)
 
     expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
-    expect(result.stackTrace).toEqual(`runtime exception: Undefined property 'testKey2'.
+    expect(result.errors).toEqual(`runtime exception: Undefined property 'testKey2'.
 [line 2] in main script`);
   })
 
@@ -302,7 +302,7 @@ describe('map', () => {
     let result = setMethod(vm, 2, key, val);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Map');
+    expect(vm.errors).toEqual('runtime exception: Object is not an instance of Map');
 
     vm = new VM();
     const getMethod = MapClass.getMethod('get');
@@ -311,7 +311,7 @@ describe('map', () => {
     result = getMethod(vm, 1, key);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Map');
+    expect(vm.errors).toEqual('runtime exception: Object is not an instance of Map');
 
     vm = new VM();
     const deleteMethod = MapClass.getMethod('delete');
@@ -320,7 +320,7 @@ describe('map', () => {
     result = deleteMethod(vm, 1, key);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Map');
+    expect(vm.errors).toEqual('runtime exception: Object is not an instance of Map');
 
     vm = new VM();
     const hasMethod = MapClass.getMethod('has');
@@ -329,7 +329,7 @@ describe('map', () => {
     result = hasMethod(vm, 1, key);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Map');
+    expect(vm.errors).toEqual('runtime exception: Object is not an instance of Map');
 
     vm = new VM();
     const clearMethod = MapClass.getMethod('clear');
@@ -337,6 +337,6 @@ describe('map', () => {
     result = clearMethod(vm, 0);
 
     expect(result).toBeFalsy();
-    expect(vm.stackTrace).toEqual('runtime exception: Object is not an instance of Map');
+    expect(vm.errors).toEqual('runtime exception: Object is not an instance of Map');
   })
 })
