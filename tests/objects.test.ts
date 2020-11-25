@@ -92,6 +92,24 @@ describe('objects', () => {
     `)
 
     expect(result2).toEqual(new ObjString('test'));
+
+    const vm3 = new VM();
+
+    let result3: any;
+    const setResultFn3 = () => {
+      result3 = vm3.pop();
+      return new ObjNull();
+    };
+    vm3.setGlobal('setResult', new ObjNativeFunction(setResultFn3, 'setResult'));
+
+    await vm3.interpret(`
+      const a = "multiline
+      string";
+      setResult(a);
+    `)
+
+    expect(result3).toEqual(new ObjString(`multiline
+      string`));
   })
 
   it('should create an ObjNumber', async () => {

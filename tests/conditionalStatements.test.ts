@@ -13,9 +13,9 @@ describe('consitional statements', () => {
     vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
 
     await vm.interpret(`
-      const a = 4;
-      if (a == 4) {
-        setResult(a);
+      const ni = 4;
+      if (ni == 4) {
+        setResult(ni);
       }
     `)
 
@@ -33,11 +33,11 @@ describe('consitional statements', () => {
     vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
 
     await vm.interpret(`
-      const a = 5;
-      if (a == 4) {
-        setResult(a);
+      const n = 5;
+      if (n == 4) {
+        setResult(n);
       } else {
-        setResult(a);
+        setResult(n);
       }
     `)
 
@@ -62,6 +62,69 @@ describe('consitional statements', () => {
         setResult(a);
       } else {
         setResult(0);
+      }
+    `)
+
+    expect(result).toEqual(new ObjNumber(5n));
+  })
+
+  it('should handle &&', async () => {
+    const vm = new VM();
+
+    let result = null;
+    const setResultFn = () => {
+      result = vm.pop();
+      return new ObjNull();
+    };
+    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+
+    await vm.interpret(`
+      const a = 4;
+      const b = 4;
+      if (a == 4 && b == 4) {
+        setResult(a);
+      }
+    `)
+
+    expect(result).toEqual(new ObjNumber(4n));
+  })
+
+  it('should handle ||', async () => {
+    const vm = new VM();
+
+    let result = null;
+    const setResultFn = () => {
+      result = vm.pop();
+      return new ObjNull();
+    };
+    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+
+    await vm.interpret(`
+      const a = 4;
+      const b = 5;
+      if (a == 4 || b == 5) {
+        setResult(b);
+      }
+    `)
+
+    expect(result).toEqual(new ObjNumber(5n));
+  })
+
+  it('should handle !=', async () => {
+    const vm = new VM();
+
+    let result = null;
+    const setResultFn = () => {
+      result = vm.pop();
+      return new ObjNull();
+    };
+    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+
+    await vm.interpret(`
+      const a = 4;
+      const b = 5;
+      if (a != b) {
+        setResult(b);
       }
     `)
 

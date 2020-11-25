@@ -85,15 +85,15 @@ describe('closures', () => {
 
     await vm.interpret(`
       let a = 3;
-      let b;
+      let et;
       function test() {
         let c = 4;
         return c;
       }
 
-      b = test;
+      et = test;
 
-      setResult(b());
+      setResult(et());
     `)
       
     expect(result).toEqual(new ObjNumber(4n));

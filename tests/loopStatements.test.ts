@@ -105,8 +105,8 @@ describe('loop statements', () => {
     await vm.interpret(`
       let j = 10;
 
-      for (let i = 0; i <= 10; i = i + 1) {
-        if (i == 5) {
+      for (let f = 0; f <= 10; f = f + 1) {
+        if (f == 5) {
           continue;
           j = 20;
         }
