@@ -41,6 +41,8 @@ class VM {
 
   chunk: Chunk;
 
+  stackTrace: string;
+
   private globals: Map<string, Obj>;
 
   private frames: Array<CallFrame>;
@@ -78,7 +80,8 @@ class VM {
     return func;
   }
 
-  async interpret(source: string | ObjFunction): Promise<InterpretResult> {
+  async interpret(source: string | ObjFunction):
+  Promise<{ result: InterpretResult, stackTrace: string }> {
     let func: ObjFunction;
     if (source instanceof ObjFunction) {
       func = source;
@@ -89,7 +92,7 @@ class VM {
     }
 
     if (!func) {
-      return InterpretResult.InterpretCompileError;
+      return this.buildInterpretResult(InterpretResult.InterpretCompileError);
     }
 
     const closure = new ObjClosure(func);
@@ -345,22 +348,26 @@ class VM {
   }
 
   runtimeError(error: string): void {
-    // eslint-disable-next-line no-console
-    console.log(`runtime exception: ${error}`);
+    this.stackTrace = `runtime exception: ${error}`;
     for (let i = this.frames.length - 1; i >= 0; i -= 1) {
       const frame = this.frames[i];
       const { closure } = frame;
       const line = closure.func.chunk.lines[frame.ip];
       if (!closure.func.name) {
-        // eslint-disable-next-line no-console
-        console.log(`[line ${line}] in main script`);
+        this.stackTrace += `\n[line ${line}] in main script`;
       } else {
-        // eslint-disable-next-line no-console
-        console.log(`[line ${line}] in ${closure.func.name}()`);
+        this.stackTrace += `\n[line ${line}] in ${closure.func.name}()`;
       }
     }
 
     this.resetStack();
+  }
+
+  buildInterpretResult(result: InterpretResult): { result: InterpretResult, stackTrace: string } {
+    return {
+      result,
+      stackTrace: this.stackTrace,
+    };
   }
 
   private captureUpvalue(local: number): ObjUpValue {
@@ -415,7 +422,7 @@ class VM {
     return true;
   }
 
-  private async run(): Promise<InterpretResult> {
+  private async run(): Promise<{ result: InterpretResult, stackTrace: string }> {
     for (; ;) {
       let frame = this.frames[this.frames.length - 1];
       const instruction = frame.readByte();
@@ -467,7 +474,7 @@ class VM {
           const value = this.globals.get(name.val);
           if (!value) {
             this.runtimeError(`Undefined variable ${name.val}`);
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           this.push(value);
           break;
@@ -483,7 +490,7 @@ class VM {
           if (this.setGlobal(name.val, this.peek(0))) {
             this.globals.delete(name.val);
             this.runtimeError(`Undefined variable ${name.val}`);
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
@@ -509,7 +516,7 @@ class VM {
         case OpCode.OpGetProperty: {
           if (!(this.peek(0) instanceof ObjInstance)) {
             this.runtimeError('Only instances have properties.');
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           const instance = this.peek(0) as ObjInstance;
           const name = frame.readConstant() as ObjString;
@@ -522,14 +529,14 @@ class VM {
           }
 
           if (!this.bindMethod(instance.klass as ObjClass, name.val)) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
         case OpCode.OpSetProperty: {
           if (!(this.peek(1) instanceof ObjInstance)) {
             this.runtimeError('Only instances have fields.');
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           const instance = this.peek(1) as ObjInstance;
 
@@ -544,7 +551,7 @@ class VM {
           const name = frame.readConstant() as ObjString;
           const superclass = this.pop() as ObjClass;
           if (!this.bindMethod(superclass, name.val)) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
@@ -567,13 +574,13 @@ class VM {
         }
         case OpCode.OpGreater: {
           if (!this.binaryOp('>')) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
         case OpCode.OpLess: {
           if (!this.binaryOp('<')) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
@@ -589,67 +596,67 @@ class VM {
             this.push(new ObjNumber(a.val + b.val));
           } else {
             this.runtimeError('Operands must be two numbers or two strings.');
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
         case OpCode.OpSubtract: {
           if (!this.binaryOp('-')) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
         case OpCode.OpMultiply: {
           if (!this.binaryOp('*')) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
         case OpCode.OpDivide: {
           if (!this.binaryOp('/')) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
         case OpCode.OpModulo: {
           if (!this.binaryOp('%')) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
         case OpCode.OpExponent: {
           if (!this.binaryOp('**')) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
         case OpCode.OpBitwiseAnd: {
           if (!this.binaryOp('&')) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
         case OpCode.OpBitwiseOr: {
           if (!this.binaryOp('|')) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
         case OpCode.OpBitwiseXor: {
           if (!this.binaryOp('^')) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
         case OpCode.OpBitwiseShiftLeft: {
           if (!this.binaryOp('<<')) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
         case OpCode.OpBitwiseShiftRight: {
           if (!this.binaryOp('>>')) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
@@ -667,7 +674,7 @@ class VM {
         case OpCode.OpNegate: {
           if (!(this.peek(0) instanceof ObjNumber)) {
             this.runtimeError('Operand must be a number.');
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
 
           this.push(new ObjNumber((this.pop() as ObjNumber).val * -1n));
@@ -676,7 +683,7 @@ class VM {
         case OpCode.OpBitwiseNot: {
           if (!(this.peek(0) instanceof ObjNumber)) {
             this.runtimeError('Operand must be a number.');
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
 
           // eslint-disable-next-line no-bitwise
@@ -723,7 +730,7 @@ class VM {
           }
           // eslint-disable-next-line no-await-in-loop
           if (!await this.callValue(this.peek(argCount), argCount)) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
@@ -763,7 +770,7 @@ class VM {
 
           if (this.frames.length === 0) {
             this.pop();
-            return InterpretResult.InterpretOk;
+            return this.buildInterpretResult(InterpretResult.InterpretOk);
           }
 
           while (this.stack.length > frm.slots && this.stack.length > 0) {
@@ -780,7 +787,7 @@ class VM {
           const superclass = this.peek(1);
           if (!(superclass instanceof ObjClass)) {
             this.runtimeError('Superclass must be a class.');
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           const subclass = this.pop() as ObjClass;
           const keys = Object.keys(superclass.methods);
@@ -802,7 +809,7 @@ class VM {
           }
           // eslint-disable-next-line no-await-in-loop
           if (!await this.invoke(method.val, argCount)) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           frame = this.frames[this.frames.length - 1];
           break;
@@ -816,7 +823,7 @@ class VM {
           }
           // eslint-disable-next-line no-await-in-loop
           if (!await this.invokeFromClass(superclass, method.val, argCount)) {
-            return InterpretResult.InterpretRuntimeError;
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           frame = this.frames[this.frames.length - 1];
           break;
@@ -880,7 +887,7 @@ class VM {
           } else {
             const setFn = instance.klass.getMethod('set') as Function;
             if (!setFn(this, 0, index, val)) {
-              return InterpretResult.InterpretRuntimeError;
+              return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
             }
           }
 
@@ -896,7 +903,7 @@ class VM {
             const getFn = instance.klass.getMethod('get') as Function;
             const val = getFn(this, 0, index);
             if (val === false) {
-              return InterpretResult.InterpretRuntimeError;
+              return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
             }
             // pop the instance
             this.pop();
@@ -905,7 +912,7 @@ class VM {
           break;
         }
         default:
-          return InterpretResult.InterpretRuntimeError;
+          return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
       }
 
       if (process.env.BENCHMARK === 'true') {

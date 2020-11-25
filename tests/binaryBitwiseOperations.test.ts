@@ -1,4 +1,4 @@
-import { VM, ObjNull, ObjNumber, ObjNativeFunction, ObjBool } from "../src";
+import { VM, ObjNull, ObjNumber, ObjNativeFunction, ObjBool, InterpretResult } from "../src";
 
 describe('binary operations', () => {
 
@@ -17,6 +17,15 @@ describe('binary operations', () => {
     `)
 
     expect(result).toEqual(new ObjNumber(8n));
+  })
+
+  it('should only add numbers and strings', async () => {
+    const vm = new VM();
+    const result = await vm.interpret('true + false;')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.stackTrace).toEqual(`runtime exception: Operands must be two numbers or two strings.
+[line 1] in main script`);
   })
 
   it('should subtract numbers', async () => {
