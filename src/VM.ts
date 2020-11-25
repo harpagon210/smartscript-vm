@@ -146,7 +146,7 @@ class VM {
     return isNewKey;
   }
 
-  private getGlobal(key: string): Obj {
+  public getGlobal(key: string): Obj {
     return this.globals.get(key);
   }
 

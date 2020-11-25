@@ -233,25 +233,27 @@ describe('map', () => {
     }
   })
 
-  it('should print a map', async () => {
+  it('should print a native class', async () => {
     const vm = new VM();
 
-    let result: any;
-    const setResultFn = () => {
-      result = vm.pop();
-      return new ObjNull();
-    };
-    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+    await vm.interpret(`1;`)
 
-    await vm.interpret(`
-      const a = new Map();
-      a['testKey'] = 'testVal';
-      setResult(a);
-    `)
-
-    expect(result instanceof ObjInstance).toBeTruthy();
-    if (result instanceof ObjInstance) {
-      expect((result.klass as ObjNativeClass).asStringNative(result)).toEqual('Map { testKey: testVal }');
+    const nativeClass = vm.getGlobal('Map');
+    expect(nativeClass instanceof ObjNativeClass).toBeTruthy();
+    if (nativeClass instanceof ObjNativeClass) {
+      expect(nativeClass.asString()).toEqual('<nativeclass Map>');
     }
+
+    const nativeCl = new ObjNativeClass('test');
+    const nativeInst = new ObjInstance(nativeCl);
+    let error: Error;
+    try {
+      nativeCl.asStringNative(nativeInst)
+    } catch (err) {
+      error = err;
+    }
+
+    expect(error.message).toEqual('asStringNative() to be implemented on test');
+    
   })
 })

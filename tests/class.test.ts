@@ -134,4 +134,43 @@ describe('class', () => {
 
     expect(result).toEqual(new ObjString('a'));
   })
+
+  it('should inherit', async () => {
+    const vm = new VM();
+
+    let results: Array<any> = [];
+    const addResultFn = () => {
+      results.push(vm.pop());
+      return new ObjNull();
+    };
+    vm.setGlobal('addResult', new ObjNativeFunction(addResultFn, 'addResult'));
+
+    await vm.interpret(`
+      class Doughnut {
+        cook() {
+          return this.finish("sprinkles");
+        }
+      
+        finish(ingredient) {
+          return "Finish with " + ingredient;
+        }
+      }
+
+      class Cruller extends Doughnut {
+        finish() {
+          // No sprinkles, always icing.
+          return super.finish('icing');
+        }
+      }
+
+      const e = new Doughnut();
+      addResult(e.finish('chocolate'));
+
+      const t = new Cruller();
+      addResult(t.finish());
+    `)
+
+    expect(results[0]).toEqual(new ObjString('Finish with chocolate'));
+    expect(results[1]).toEqual(new ObjString('Finish with icing'));
+  })
 })

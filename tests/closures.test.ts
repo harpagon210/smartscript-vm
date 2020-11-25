@@ -1,6 +1,7 @@
 import { ObjNativeFunction, ObjNull, ObjNumber, ObjString, VM } from "../src";
+import ObjClosure from "../src/objects/ObjClosure";
 
-describe('upvalue', () => {
+describe('closures', () => {
   it('should change global value', async () => {
     const vm = new VM();
 
@@ -133,9 +134,18 @@ describe('upvalue', () => {
       main();
       addResult(globalOne());
       addResult(globalTwo());
+
+      print(globalOne);
     `)
       
     expect(result[0]).toEqual(new ObjString('one'));
     expect(result[1]).toEqual(new ObjString('two'));
+  })
+
+  it('should print main closure and function name', async () => {
+    const func = VM.compile('function test () {}');
+    const closure = new ObjClosure(func);
+    expect(func.chunk.constants[1].asString()).toEqual('<function test>');
+    expect(closure.asString()).toEqual('<closure main script>');
   })
 })

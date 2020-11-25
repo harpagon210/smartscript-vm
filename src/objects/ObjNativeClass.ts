@@ -19,7 +19,7 @@ class ObjNativeClass implements Obj {
   // @ts-ignore this method has to be overriden by the native class
   // eslint-disable-next-line class-methods-use-this
   asStringNative(instance: ObjInstance): string {
-    return `<nativeinstance ${instance.klass.name}>`;
+    throw new Error(`asStringNative() to be implemented on ${instance.klass.name}`);
   }
 
   getMethod(key: string): Function {
