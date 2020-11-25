@@ -150,10 +150,10 @@ class VM {
     return this.globals.get(key);
   }
 
-  private binaryOp(operator: string): InterpretResult {
+  private binaryOp(operator: string): boolean {
     if (!(this.peek(0) instanceof ObjNumber) || !(this.peek(1) instanceof ObjNumber)) {
       this.runtimeError('Operands must be numbers.');
-      return InterpretResult.InterpretRuntimeError;
+      return false;
     }
 
     const b = this.pop() as ObjNumber;
@@ -211,7 +211,7 @@ class VM {
     }
 
     this.push(typeof res === 'boolean' ? new ObjBool(res) : new ObjNumber(res));
-    return InterpretResult.InterpretOk;
+    return true;
   }
 
   peek(distance: number): Obj {
@@ -565,8 +565,18 @@ class VM {
           this.push(new ObjBool(result));
           break;
         }
-        case OpCode.OpGreater: this.binaryOp('>'); break;
-        case OpCode.OpLess: this.binaryOp('<'); break;
+        case OpCode.OpGreater: {
+          if (!this.binaryOp('>')) {
+            return InterpretResult.InterpretRuntimeError;
+          }
+          break;
+        }
+        case OpCode.OpLess: {
+          if (!this.binaryOp('<')) {
+            return InterpretResult.InterpretRuntimeError;
+          }
+          break;
+        }
         case OpCode.OpAdd: {
           if (this.peek(0) instanceof ObjString && this.peek(1) instanceof ObjString) {
             const b = this.pop() as ObjString;
@@ -584,43 +594,63 @@ class VM {
           break;
         }
         case OpCode.OpSubtract: {
-          this.binaryOp('-');
+          if (!this.binaryOp('-')) {
+            return InterpretResult.InterpretRuntimeError;
+          }
           break;
         }
         case OpCode.OpMultiply: {
-          this.binaryOp('*');
+          if (!this.binaryOp('*')) {
+            return InterpretResult.InterpretRuntimeError;
+          }
           break;
         }
         case OpCode.OpDivide: {
-          this.binaryOp('/');
+          if (!this.binaryOp('/')) {
+            return InterpretResult.InterpretRuntimeError;
+          }
           break;
         }
         case OpCode.OpModulo: {
-          this.binaryOp('%');
+          if (!this.binaryOp('%')) {
+            return InterpretResult.InterpretRuntimeError;
+          }
           break;
         }
         case OpCode.OpExponent: {
-          this.binaryOp('**');
+          if (!this.binaryOp('**')) {
+            return InterpretResult.InterpretRuntimeError;
+          }
           break;
         }
         case OpCode.OpBitwiseAnd: {
-          this.binaryOp('&');
+          if (!this.binaryOp('&')) {
+            return InterpretResult.InterpretRuntimeError;
+          }
           break;
         }
         case OpCode.OpBitwiseOr: {
-          this.binaryOp('|');
+          if (!this.binaryOp('|')) {
+            return InterpretResult.InterpretRuntimeError;
+          }
           break;
         }
         case OpCode.OpBitwiseXor: {
-          this.binaryOp('^');
+          if (!this.binaryOp('^')) {
+            return InterpretResult.InterpretRuntimeError;
+          }
           break;
         }
         case OpCode.OpBitwiseShiftLeft: {
-          this.binaryOp('<<');
+          if (!this.binaryOp('<<')) {
+            return InterpretResult.InterpretRuntimeError;
+          }
           break;
         }
         case OpCode.OpBitwiseShiftRight: {
-          this.binaryOp('>>');
+          if (!this.binaryOp('>>')) {
+            return InterpretResult.InterpretRuntimeError;
+          }
           break;
         }
         case OpCode.OpNot: {
