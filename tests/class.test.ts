@@ -157,6 +157,10 @@ describe('class', () => {
         finish(ingredient) {
           return "Finish with " + ingredient;
         }
+
+        test() {
+          return 1;
+        }
       }
 
       class Cruller extends Doughnut {
@@ -279,5 +283,21 @@ describe('class', () => {
     
     expect(result.result).toEqual(InterpretResult.InterpretCompileError);
     expect(result.errors).toEqual("[line 1] Error at Cruller: A class cannot inherit from itself.");
+
+    vm = new VM();
+
+    result = await vm.interpret(`
+      const a = "test";
+      class b extends a {
+        constructor() {
+        }
+      }
+
+      const c = new b();
+    `)
+    
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Superclass must be a class.
+[line 2] in main script`);
   })
 })

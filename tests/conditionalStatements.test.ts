@@ -1,4 +1,4 @@
-import { VM, ObjNull, ObjNumber, ObjNativeFunction } from "../src";
+import { VM, ObjNull, ObjNumber, ObjNativeFunction, ObjBool } from "../src";
 
 describe('consitional statements', () => {
 
@@ -129,5 +129,30 @@ describe('consitional statements', () => {
     `)
 
     expect(result).toEqual(new ObjNumber(5n));
+  })
+
+  it('should handle equalities', async () => {
+    const vm = new VM();
+
+    let results: Array<any> = [];
+    const addResultFn = () => {
+      results.push(vm.pop());
+      return new ObjNull();
+    };
+    vm.setGlobal('addResult', new ObjNativeFunction(addResultFn, 'addResult'));
+
+    await vm.interpret(`
+      addResult(true == true);
+      addResult(false == false);
+      addResult(1 == 1);
+      addResult("1" == "1");
+      addResult(null == null);
+    `)
+
+    expect(results[0]).toEqual(new ObjBool(true));
+    expect(results[1]).toEqual(new ObjBool(true));
+    expect(results[2]).toEqual(new ObjBool(true));
+    expect(results[3]).toEqual(new ObjBool(true));
+    expect(results[4]).toEqual(new ObjBool(true));
   })
 })
