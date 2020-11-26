@@ -145,22 +145,26 @@ describe('closures', () => {
         }
       }
 
-      
-      {
-        let m;
-        {
-          let n = 5;
-          function fn() {
-            print(n);
-            addResult(m);
+      function outer() {
+        let a = 1;
+        let b = 2;
+        function middle() {
+          let c = 3;
+          let d = 4;
+          function inner() {
+            addResult(a + c + b + d);
           }
-          m = fn;
+
+          inner();
         }
-        m();
+
+        middle();
       }
+      outer();
     `)
     expect(result[0]).toEqual(new ObjString('one'));
     expect(result[1]).toEqual(new ObjString('two'));
+    expect(result[2]).toEqual(new ObjNumber(10n));
   })
 
   it('should print main closure and function name', async () => {

@@ -69,6 +69,16 @@ describe('compiler', () => {
 
     expect(result.result).toEqual(InterpretResult.InterpretCompileError);
     expect(result.errors).toEqual("[line 2] Error at let: Expect ';' after variable declaration.");
+
+    result = VM.compile(`
+      let a = 3
+      class b {
+
+      }
+    `);
+
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 2] Error at class: Expect ';' after variable declaration.");
   })
 
   it('should compile comments', async () => {
@@ -97,11 +107,16 @@ describe('compiler', () => {
     expect(result).toEqual(new ObjString('test'));
   })
 
-  it('should print code', async () => {
-    const vm = new VM();
+  it('should print code and not print code', async () => {
+    let vm = new VM();
     process.env.DEBUG_PRINT_CODE = 'true';
-    const interpretRes = await vm.interpret('1 + 1;')
+    let interpretRes = await vm.interpret('1 + 1;')
 
     expect(interpretRes.result).toEqual(InterpretResult.InterpretRuntimeOk);
+
+    vm = new VM();
+    interpretRes = await vm.interpret('1 + 1')
+
+    expect(interpretRes.result).toEqual(InterpretResult.InterpretCompileError);
   })
 })

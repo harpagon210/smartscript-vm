@@ -221,7 +221,7 @@ class Compiler {
     const constant = this.currentChunk().addConstant(obj);
 
     /* istanbul ignore next */
-    if (constant > Number.MAX_SAFE_INTEGER) {
+    if (constant >= Number.MAX_SAFE_INTEGER) {
       this.error('Too many constants in one chunk.');
       return 0;
     }
@@ -256,7 +256,7 @@ class Compiler {
     }
 
     /* istanbul ignore next */
-    if (this.func.upvalues.length === Number.MAX_SAFE_INTEGER) {
+    if (this.func.upvalues.length >= Number.MAX_SAFE_INTEGER) {
       this.error('Too many closure variables in function.');
       return 0;
     }
@@ -625,7 +625,10 @@ class Compiler {
     this.emitByte(OpCode.OpLoop);
 
     const offset = this.currentChunk().code.length - loopStart + 1;
-    if (offset > Number.MAX_SAFE_INTEGER) this.error('Loop body too large.');
+    /* istanbul ignore next */
+    if (offset >= Number.MAX_SAFE_INTEGER) {
+      this.error('Loop body too large.');
+    }
 
     this.emitByte(offset);
   }
@@ -876,7 +879,7 @@ class Compiler {
 
   addLocal(name: string): void {
     /* istanbul ignore next */
-    if (this.locals.length === Number.MAX_SAFE_INTEGER) {
+    if (this.locals.length >= Number.MAX_SAFE_INTEGER) {
       this.error('Too many local variables in function.');
       return;
     }

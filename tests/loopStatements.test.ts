@@ -47,10 +47,10 @@ describe('loop statements', () => {
   })
 
   it('should handle for statement', async () => {
-    const vm = new VM();
+    let vm = new VM();
 
     let result = null;
-    const setResultFn = () => {
+    let setResultFn = () => {
       result = vm.pop();
       return new ObjNull();
     };
@@ -59,6 +59,26 @@ describe('loop statements', () => {
     await vm.interpret(`
       let i = 20;
       for (i = 0; i <= 10; i = i + 1) {
+        
+      }
+
+      setResult(i);
+    `)
+    
+    expect(result).toEqual(new ObjNumber(11n));
+
+    vm = new VM();
+
+    result = null;
+    setResultFn = () => {
+      result = vm.pop();
+      return new ObjNull();
+    };
+    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+
+    await vm.interpret(`
+      let i = 0;
+      for (; i <= 10; i = i + 1) {
         
       }
 
@@ -83,7 +103,7 @@ describe('loop statements', () => {
       for (i = 0; i <= 10; i = i + 1) {
         let e = 4;
         e = 4;
-        
+
         if (i == 5) {
           break;
         }
