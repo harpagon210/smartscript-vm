@@ -1,4 +1,4 @@
-import { VM, ObjNull, ObjNumber, ObjNativeFunction } from "../src";
+import { VM, ObjNull, ObjNumber, ObjNativeFunction, InterpretResult } from "../src";
 
 describe('loop statements', () => {
 
@@ -116,5 +116,17 @@ describe('loop statements', () => {
     `)
 
     expect(result).toEqual(new ObjNumber(10n));
+  })
+
+  it('should return a compilation error', async () => {
+    let result = VM.compile('const a = 1; continue;');
+
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 1] Error at continue: Can't use 'continue' outside of a loop.");
+    
+    result = VM.compile('const a = 1; break;');
+
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 1] Error at break: Can't use 'break' outside of a loop.");
   })
 })

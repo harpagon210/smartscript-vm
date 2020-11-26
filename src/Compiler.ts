@@ -254,6 +254,7 @@ class Compiler {
       }
     }
 
+    /* istanbul ignore next */
     if (this.func.upvalues.length === Number.MAX_SAFE_INTEGER) {
       this.error('Too many closure variables in function.');
       return 0;
@@ -490,7 +491,6 @@ class Compiler {
       case TokenType.TokenExponent: this.emitByte(OpCode.OpExponent); break;
       case TokenType.TokenBitwiseAnd: this.emitByte(OpCode.OpBitwiseAnd); break;
       case TokenType.TokenBitwiseOr: this.emitByte(OpCode.OpBitwiseOr); break;
-      case TokenType.TokenBitwiseNot: this.emitByte(OpCode.OpBitwiseNot); break;
       case TokenType.TokenBitwiseXor: this.emitByte(OpCode.OpBitwiseXor); break;
       case TokenType.TokenBitwiseShiftLeft: this.emitByte(OpCode.OpBitwiseShiftLeft); break;
       case TokenType.TokenBitwiseShiftRight: this.emitByte(OpCode.OpBitwiseShiftRight); break;
@@ -605,7 +605,8 @@ class Compiler {
     // -2 to adjust for the bytecode for the jump offset itself.
     const jump = this.currentChunk().code.length - offset - 1;
 
-    if (jump > Number.MAX_SAFE_INTEGER) {
+    /* istanbul ignore next */
+    if (jump >= Number.MAX_SAFE_INTEGER) {
       this.error('Too much code to jump over.');
     }
 
@@ -951,6 +952,9 @@ class Compiler {
     // Create the function object.
     const func = compiler.endCompiler();
 
+    if (compiler.errors) {
+      this.errors = compiler.errors;
+    }
     this.emitBytes(OpCode.OpClosure, this.makeConstant(func));
 
     for (let i = 0; i < func.upvalues.length; i += 1) {

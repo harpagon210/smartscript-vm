@@ -104,10 +104,10 @@ describe('map', () => {
   })
 
   it('should get a value', async () => {
-    const vm = new VM();
+    let vm = new VM();
 
     let result: any;
-    const setResultFn = () => {
+    let setResultFn = () => {
       result = vm.pop();
       return new ObjNull();
     };
@@ -120,22 +120,38 @@ describe('map', () => {
 
     expect(result).toEqual(new ObjString('testVal'))
 
-    const vm2 = new VM();
+    vm = new VM();
 
-    let result2: any;
-    const setResultFn2 = () => {
-      result2 = vm2.pop();
+    result = [];
+    setResultFn = () => {
+      result = vm.pop();
       return new ObjNull();
     };
-    vm2.setGlobal('setResult', new ObjNativeFunction(setResultFn2, 'setResult'));
+    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
 
-    await vm2.interpret(`
+    await vm.interpret(`
       const a = new Map();
       a.set('testKey', 'testVal');
       setResult(a['testKey']);
     `)
 
-    expect(result2).toEqual(new ObjString('testVal'))
+    expect(result).toEqual(new ObjString('testVal'))
+
+    vm = new VM();
+
+    result = [];
+    setResultFn = () => {
+      result = vm.pop();
+      return new ObjNull();
+    };
+    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+
+    await vm.interpret(`
+      const a = { 'test'+'Key': 'testVal' };
+      setResult(a['testKey']);
+    `)
+
+    expect(result).toEqual(new ObjString('testVal'))
   })
 
   it('should not get a value', async () => {

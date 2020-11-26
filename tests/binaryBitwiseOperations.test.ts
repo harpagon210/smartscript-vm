@@ -364,4 +364,22 @@ describe('binary operations', () => {
 
     expect(result).toEqual(new ObjBool(true));
   })
+
+  it('should "minus" a value', async () => {
+    const vm = new VM();
+
+    let result = null;
+    const setResultFn = () => {
+      result = vm.pop();
+      return new ObjNull();
+    };
+    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+
+    await vm.interpret(`
+      const a = 1;
+      setResult(-a);
+    `)
+
+    expect(result).toEqual(new ObjNumber(-1n));
+  })
 })

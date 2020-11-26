@@ -1,4 +1,4 @@
-import { ObjNativeFunction, ObjNull, ObjNumber, ObjString, VM } from "../src";
+import { InterpretResult, ObjNativeFunction, ObjNull, ObjNumber, ObjString, VM } from "../src";
 import ObjClosure from "../src/objects/ObjClosure";
 
 describe('closures', () => {
@@ -147,5 +147,20 @@ describe('closures', () => {
     const closure = new ObjClosure(func);
     expect(func.chunk.constants[1].asString()).toEqual('<function test>');
     expect(closure.asString()).toEqual('<closure main script>');
+  })
+
+  it('should error out when compiling', async () => {
+    let vm = new VM();
+
+    let result = await vm.interpret(`
+      let a = 3;
+      
+      {
+        let b = b;
+      }
+    `)
+    
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual('[line 4] Error at b: Cannot read local variable in its own initializer.');
   })
 })

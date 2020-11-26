@@ -21,6 +21,32 @@ describe('compiler', () => {
 
     expect(result.result).toEqual(InterpretResult.InterpretCompileError);
     expect(result.errors).toEqual("[line 1] Error at end: Expect expression.");
+
+    result = VM.compile('1 = a');
+
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 1] Error at =: Invalid assignment target.");
+
+    result = VM.compile(`const a = 1;
+    a = 2;`);
+
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 2] Error at =: Cannot reassign const a");
+
+    let args = 'a1';
+    for (let index = 2; index < 257; index++) {
+      args = `${args},a${index}`;
+    }
+    result = VM.compile(`
+      function test() {
+          
+      }
+
+      test(${args})
+    `)
+    
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 5] Error at a256: Cannot have more than 255 arguments.");
   })
 
   it('should compile comments', async () => {

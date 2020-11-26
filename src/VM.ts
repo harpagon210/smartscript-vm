@@ -90,10 +90,8 @@ class VM {
       compilationResult = compiler.compile();
       func = compilationResult.func;
     }
-
     if (compilationResult && compilationResult.result === InterpretResult.InterpretCompileError) {
-      this.errors = compilationResult.errors;
-      return this.buildInterpretResult(InterpretResult.InterpretCompileError);
+      return { result: InterpretResult.InterpretCompileError, errors: compilationResult.errors };
     }
 
     const closure = new ObjClosure(func);

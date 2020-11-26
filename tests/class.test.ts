@@ -1,4 +1,4 @@
-import { VM, ObjNull, ObjNativeFunction, ObjInstance, ObjString, ObjNumber } from "../src";
+import { VM, ObjNull, ObjNativeFunction, ObjInstance, ObjString, ObjNumber, InterpretResult } from "../src";
 import ObjClosure from "../src/objects/ObjClosure";
 
 describe('class', () => {
@@ -147,6 +147,9 @@ describe('class', () => {
 
     await vm.interpret(`
       class Doughnut {
+        constructor() {
+          this.dough = "yeast";
+        }
         cook() {
           return this.finish("sprinkles");
         }
@@ -157,9 +160,17 @@ describe('class', () => {
       }
 
       class Cruller extends Doughnut {
+        constructor() {
+          super();
+        }
+
         finish() {
           // No sprinkles, always icing.
           return super.finish('icing');
+        }
+
+        getDough() {
+          return super.dough;
         }
       }
 
@@ -172,5 +183,75 @@ describe('class', () => {
 
     expect(results[0]).toEqual(new ObjString('Finish with chocolate'));
     expect(results[1]).toEqual(new ObjString('Finish with icing'));
+  })
+
+  it('should error out when compiling', async () => {
+    let vm = new VM();
+
+    let result = await vm.interpret(`
+      class Doughnut {
+        constructor() {
+          this.dough = "yeast";
+        }
+      }
+
+      class Cruller extends Doughnut {
+        test() {
+          super();
+        }
+      }
+    `)
+    
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual('[line 9] Error at super: Super calls are not permitted outside constructors or in nested functions inside constructors.');
+
+    vm = new VM();
+
+    result = await vm.interpret(`
+      super();
+    `)
+    
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 1] Error at super: Cannot use 'super' outside of a class.");
+
+    vm = new VM();
+
+    result = await vm.interpret(`
+      this.a;
+    `)
+    
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 1] Error at this: Cannot use 'this' outside of a class.");
+
+    vm = new VM();
+
+    result = await vm.interpret(`
+    class Cruller {
+      test() {
+        super();
+      }
+    }
+    `)
+    
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 3] Error at super: Cannot use 'super' in a class with no superclass.");
+
+    vm = new VM();
+
+    let args = 'a1';
+    for (let index = 2; index < 257; index++) {
+      args = `${args},a${index}`;
+    }
+
+    result = await vm.interpret(`
+    class Cruller {
+      test(${args}) {
+        
+      }
+    }
+    `)
+    
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 2] Error at a256: Cannot have more than 255 parameters.");
   })
 })
