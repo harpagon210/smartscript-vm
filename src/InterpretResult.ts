@@ -3,6 +3,7 @@ enum InterpretResult {
   InterpretRuntimeOk,
   InterpretCompileError,
   InterpretRuntimeError,
+  InterpretRuntimeOutOfGas,
 }
 
 export default InterpretResult;

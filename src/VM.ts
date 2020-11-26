@@ -25,6 +25,7 @@ import ObjArray from './objects/ObjArray';
 import ArrayClass from './nativeclasses/Array';
 // eslint-disable-next-line import/no-cycle
 import MapClass from './nativeclasses/Map';
+import calculateGasCostOperation from './Gas';
 
 const FRAMES_MAX = 11000;
 
@@ -42,6 +43,8 @@ class VM {
   chunk: Chunk;
 
   errors: string;
+
+  private remainingGas: number;
 
   private globals: Map<string, Obj>;
 
@@ -78,8 +81,9 @@ class VM {
     return compiler.compile();
   }
 
-  async interpret(source: string | ObjFunction):
-  Promise<{ result: InterpretResult, errors: string }> {
+  async interpret(source: string | ObjFunction, availableGas: number = Number.MAX_SAFE_INTEGER):
+  Promise<{ result: InterpretResult; errors: string; gasUsed: number; }> {
+    this.remainingGas = availableGas;
     let func: ObjFunction;
     let compilationResult = null;
     if (source instanceof ObjFunction) {
@@ -91,7 +95,11 @@ class VM {
       func = compilationResult.func;
     }
     if (compilationResult && compilationResult.result === InterpretResult.InterpretCompileError) {
-      return { result: InterpretResult.InterpretCompileError, errors: compilationResult.errors };
+      return {
+        result: InterpretResult.InterpretCompileError,
+        errors: compilationResult.errors,
+        gasUsed: 0,
+      };
     }
 
     const closure = new ObjClosure(func);
@@ -128,10 +136,20 @@ class VM {
         console.log(`${OpCode[key]}, ${len}, ${total}, ${min}, ${max}`);
       });
 
-      return res;
+      return {
+        result: res.result,
+        errors: res.errors,
+        gasUsed: availableGas - this.remainingGas,
+      };
     }
 
-    return this.run();
+    const res = await this.run();
+
+    return {
+      result: res.result,
+      errors: res.errors,
+      gasUsed: availableGas - this.remainingGas,
+    };
   }
 
   private push(obj: Obj): void {
@@ -422,6 +440,17 @@ class VM {
     for (; ;) {
       let frame = this.frames[this.frames.length - 1];
       const instruction = frame.readByte();
+
+      const opCost = calculateGasCostOperation(instruction);
+
+      if (this.remainingGas - opCost < 0) {
+        return {
+          result: InterpretResult.InterpretRuntimeOutOfGas,
+          errors: 'out of gas',
+        };
+      }
+
+      this.remainingGas -= opCost;
 
       if (process.env.DEBUG_TRACE_EXECUTION === 'true') {
         let output = '          ';
