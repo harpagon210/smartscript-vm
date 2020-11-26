@@ -244,14 +244,40 @@ describe('class', () => {
     }
 
     result = await vm.interpret(`
-    class Cruller {
-      test(${args}) {
-        
+      class Cruller {
+        test(${args}) {
+          
+        }
       }
-    }
     `)
     
     expect(result.result).toEqual(InterpretResult.InterpretCompileError);
     expect(result.errors).toEqual("[line 2] Error at a256: Cannot have more than 255 parameters.");
+
+    vm = new VM();
+
+    result = await vm.interpret(`
+      class Cruller {
+        constructor() {
+            return 1;
+        }
+      }
+    `)
+    
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 3] Error at return: Cannot return a value from an initializer.");
+
+    vm = new VM();
+
+    result = await vm.interpret(`
+      class Cruller extends Cruller {
+        constructor() {
+            return 1;
+        }
+      }
+    `)
+    
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 1] Error at Cruller: A class cannot inherit from itself.");
   })
 })

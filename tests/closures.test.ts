@@ -136,8 +136,29 @@ describe('closures', () => {
       addResult(globalTwo());
 
       print(globalOne);
-    `)
+
+      {
+        let a = 3;
+        function fn() {
+          print(a);
+          addResult(a);
+        }
+      }
+
       
+      {
+        let m;
+        {
+          let n = 5;
+          function fn() {
+            print(n);
+            addResult(m);
+          }
+          m = fn;
+        }
+        m();
+      }
+    `)
     expect(result[0]).toEqual(new ObjString('one'));
     expect(result[1]).toEqual(new ObjString('two'));
   })

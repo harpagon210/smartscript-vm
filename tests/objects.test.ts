@@ -148,4 +148,29 @@ describe('objects', () => {
 
     expect(result).toEqual(new ObjNumber(1n));
   })
+
+  it('should return from a function', async () => {
+    const vm = new VM();
+
+    let result: any;
+    const setResultFn = () => {
+      result = vm.pop();
+      return new ObjNull();
+    };
+    vm.setGlobal('setResult', new ObjNativeFunction(setResultFn, 'setResult'));
+
+    await vm.interpret(`
+      function test() {
+        return 1;
+      }
+
+      function test2() {
+        return;
+      }
+
+      setResult(test());
+    `)
+
+    expect(result).toEqual(new ObjNumber(1n));
+  })
 })

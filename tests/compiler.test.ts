@@ -47,6 +47,28 @@ describe('compiler', () => {
     
     expect(result.result).toEqual(InterpretResult.InterpretCompileError);
     expect(result.errors).toEqual("[line 5] Error at a256: Cannot have more than 255 arguments.");
+
+    result = VM.compile(`return 1;`);
+
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 1] Error at return: Cannot return from top-level code.");
+
+    result = VM.compile(`
+    {
+      let a = 3;
+      let a = 4;
+    }`);
+
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 3] Error at a: Variable with this name already declared in this scope.");
+
+    result = VM.compile(`
+      let a = 3
+      let b = 4;
+    `);
+
+    expect(result.result).toEqual(InterpretResult.InterpretCompileError);
+    expect(result.errors).toEqual("[line 2] Error at let: Expect ';' after variable declaration.");
   })
 
   it('should compile comments', async () => {
@@ -73,5 +95,13 @@ describe('compiler', () => {
 
     expect(interpretRes.result).toEqual(InterpretResult.InterpretRuntimeOk);
     expect(result).toEqual(new ObjString('test'));
+  })
+
+  it('should print code', async () => {
+    const vm = new VM();
+    process.env.DEBUG_PRINT_CODE = 'true';
+    const interpretRes = await vm.interpret('1 + 1;')
+
+    expect(interpretRes.result).toEqual(InterpretResult.InterpretRuntimeOk);
   })
 })

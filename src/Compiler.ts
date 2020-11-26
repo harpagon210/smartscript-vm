@@ -220,6 +220,7 @@ class Compiler {
   makeConstant(obj: Obj): number {
     const constant = this.currentChunk().addConstant(obj);
 
+    /* istanbul ignore next */
     if (constant > Number.MAX_SAFE_INTEGER) {
       this.error('Too many constants in one chunk.');
       return 0;
@@ -874,6 +875,7 @@ class Compiler {
   }
 
   addLocal(name: string): void {
+    /* istanbul ignore next */
     if (this.locals.length === Number.MAX_SAFE_INTEGER) {
       this.error('Too many local variables in function.');
       return;
@@ -1046,10 +1048,8 @@ class Compiler {
 
   synchronize(): void {
     this.parser.panicMode = false;
-
     while (this.parser.current.type !== TokenType.TokenEof) {
       if (this.parser.previous.type === TokenType.TokenSemicolon) return;
-
       switch (this.parser.current.type) {
         case TokenType.TokenClass:
         case TokenType.TokenFunction:
