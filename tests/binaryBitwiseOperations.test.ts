@@ -28,6 +28,92 @@ describe('binary operations', () => {
 [line 1] in main script`);
   })
 
+  it('should only perform binary ops on number', async () => {
+    let vm = new VM();
+    let result = await vm.interpret('1 - "a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operands must be numbers.
+[line 1] in main script`);
+
+    vm = new VM();
+    result = await vm.interpret('1 * "a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operands must be numbers.
+[line 1] in main script`);
+
+    vm = new VM();
+    result = await vm.interpret('1 / "a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operands must be numbers.
+[line 1] in main script`);
+
+    vm = new VM();
+    result = await vm.interpret('1 < "a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operands must be numbers.
+[line 1] in main script`);
+
+    vm = new VM();
+    result = await vm.interpret('1 > "a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operands must be numbers.
+[line 1] in main script`);
+
+    vm = new VM();
+    result = await vm.interpret('1 % "a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operands must be numbers.
+[line 1] in main script`);
+
+    vm = new VM();
+    result = await vm.interpret('1 ** "a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operands must be numbers.
+[line 1] in main script`);
+
+    vm = new VM();
+    result = await vm.interpret('1 & "a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operands must be numbers.
+[line 1] in main script`);
+
+    vm = new VM();
+    result = await vm.interpret('1 | "a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operands must be numbers.
+[line 1] in main script`);
+
+    vm = new VM();
+    result = await vm.interpret('1 ^ "a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operands must be numbers.
+[line 1] in main script`);
+
+    vm = new VM();
+    result = await vm.interpret('1 << "a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operands must be numbers.
+[line 1] in main script`);
+
+    vm = new VM();
+    result = await vm.interpret('1 >> "a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operands must be numbers.
+[line 1] in main script`);
+  })
+
   it('should subtract numbers', async () => {
     const vm = new VM();
 
@@ -199,7 +285,7 @@ describe('binary operations', () => {
   })
 
   it('should perform a bitwise ~', async () => {
-    const vm = new VM();
+    let vm = new VM();
 
     let result = null;
     const setResultFn = () => {
@@ -213,6 +299,13 @@ describe('binary operations', () => {
     `)
 
     expect(result).toEqual(new ObjNumber(-6n));
+
+    vm = new VM();
+    result = await vm.interpret('~"a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operand must be a number.
+[line 1] in main script`);
   })
 
   it('should be greather than', async () => {
@@ -365,8 +458,8 @@ describe('binary operations', () => {
     expect(result).toEqual(new ObjBool(true));
   })
 
-  it('should "minus" a value', async () => {
-    const vm = new VM();
+  it('should negate a value', async () => {
+    let vm = new VM();
 
     let result = null;
     const setResultFn = () => {
@@ -381,5 +474,12 @@ describe('binary operations', () => {
     `)
 
     expect(result).toEqual(new ObjNumber(-1n));
+
+    vm = new VM();
+    result = await vm.interpret('-"a";')
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: Operand must be a number.
+[line 1] in main script`);
   })
 })

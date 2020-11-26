@@ -164,9 +164,6 @@ class VM {
     let res = null;
 
     switch (operator) {
-      case '+':
-        res = a.val + b.val;
-        break;
       case '-':
         res = a.val - b.val;
         break;

@@ -152,6 +152,8 @@ describe('closures', () => {
           let c = 3;
           let d = 4;
           function inner() {
+            c = 3;
+            b = 2;
             addResult(a + c + b + d);
           }
 

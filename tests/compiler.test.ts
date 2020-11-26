@@ -44,7 +44,7 @@ describe('compiler', () => {
 
       test(${args})
     `)
-    
+
     expect(result.result).toEqual(InterpretResult.InterpretCompileError);
     expect(result.errors).toEqual("[line 5] Error at a256: Cannot have more than 255 arguments.");
 
@@ -110,7 +110,73 @@ describe('compiler', () => {
   it('should print code and not print code', async () => {
     let vm = new VM();
     process.env.DEBUG_PRINT_CODE = 'true';
-    let interpretRes = await vm.interpret('1 + 1;')
+    let interpretRes = await vm.interpret(`
+    1 + 1;
+    1 - 1;
+    1 * 1;
+    1 / 1;
+    1 % 1;
+    1 & 1;
+    1 | 1;
+    1 ^ 1;
+    1 << 1;
+    1 >> 1;
+    -1;
+    !true;
+
+    if (1 == 1) {
+        
+    } else if (1 > 1) {
+
+    } else if (1 < 1) { 
+    
+    } else {
+
+    }
+    
+
+    while (false) {
+
+    }
+
+    do {
+
+    } while (false);
+
+    for(;false; 1 + 1) {
+
+    }
+
+    class a {
+      constructor() {
+        this.aprop = 1;
+      }
+
+      testSuper() {
+
+      }
+    }
+
+    class b extends a {
+      constructor() {
+        super();
+        this.bprop = 2;
+      }
+
+      test() {
+        super.testSuper();
+      }
+    }
+    const cl = new b();
+    print(cl.aprop);
+    print(cl.bprop);
+    print(cl.test());
+
+    let t = [1,2];
+    t[0] = t[1];
+    let t2 = { a: 1, b: 2 };
+    t2['a'] = t2['b'];
+  `)
 
     expect(interpretRes.result).toEqual(InterpretResult.InterpretRuntimeOk);
 
