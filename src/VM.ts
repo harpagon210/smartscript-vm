@@ -25,7 +25,6 @@ import ObjArray from './objects/ObjArray';
 import ArrayClass from './nativeclasses/Array';
 // eslint-disable-next-line import/no-cycle
 import MapClass from './nativeclasses/Map';
-import calculateGasCostOperation from './Gas';
 
 const FRAMES_MAX = 11000;
 
@@ -46,6 +45,8 @@ class VM {
 
   private remainingGas: number;
 
+  private gasCostOp: Map<OpCode, number>;
+
   private globals: Map<string, Obj>;
 
   private frames: Array<CallFrame>;
@@ -54,13 +55,14 @@ class VM {
 
   private benchmarks: Map<OpCode, Array<number>>;
 
-  constructor() {
+  constructor(gasCostOp: Map<OpCode, number> = null) {
     this.ip = null;
     this.stack = [];
     this.chunk = null;
     this.globals = new Map();
     this.frames = [];
     this.openUpValues = null;
+    this.gasCostOp = gasCostOp;
 
     // START NATIVE FUNCTIONS/CLASSES
 
@@ -81,8 +83,8 @@ class VM {
     return compiler.compile();
   }
 
-  async interpret(source: string | ObjFunction, availableGas: number = Number.MAX_SAFE_INTEGER):
-  Promise<{ result: InterpretResult; errors: string; gasUsed: number; }> {
+  async interpret(source: string | ObjFunction, availableGas: number = 0):
+  Promise<{ result: InterpretResult, errors: string, gasUsed: number }> {
     this.remainingGas = availableGas;
     let func: ObjFunction;
     let compilationResult = null;
@@ -168,6 +170,18 @@ class VM {
 
   public getGlobal(key: string): Obj {
     return this.globals.get(key);
+  }
+
+  private calculateGasCostOperation(opCode: OpCode) {
+    if (this.gasCostOp) {
+      const cost = this.gasCostOp.get(opCode);
+
+      if (cost) {
+        return cost;
+      }
+    }
+
+    return 0;
   }
 
   private binaryOp(operator: string): boolean {
@@ -441,7 +455,7 @@ class VM {
       let frame = this.frames[this.frames.length - 1];
       const instruction = frame.readByte();
 
-      const opCost = calculateGasCostOperation(instruction);
+      const opCost = this.calculateGasCostOperation(instruction);
 
       if (this.remainingGas - opCost < 0) {
         return {

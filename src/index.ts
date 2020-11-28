@@ -10,9 +10,10 @@ import ObjInstance from './objects/ObjInstance';
 import ObjString from './objects/ObjString';
 import ArrayClass from './nativeclasses/Array';
 import MapClass from './nativeclasses/Map';
+import OpCode from './OpCode';
 
 export {
   VM, InterpretResult,
   ObjArray, ObjBool, ObjNativeClass, ObjNativeFunction, ObjNull, ObjNumber, ObjInstance, ObjString,
-  ArrayClass, MapClass,
+  ArrayClass, MapClass, OpCode,
 };
