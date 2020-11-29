@@ -84,7 +84,7 @@ class VM {
   }
 
   async interpret(source: string | ObjFunction, availableGas: number = 0):
-    Promise<{ result: InterpretResult, errors: string, gasUsed: number }> {
+  Promise<{ result: InterpretResult, errors: string, gasUsed: number }> {
     this.remainingGas = availableGas;
     let func: ObjFunction;
     let compilationResult = null;
