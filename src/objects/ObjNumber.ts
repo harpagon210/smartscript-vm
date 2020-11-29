@@ -3,8 +3,11 @@ import Obj from './Obj';
 class ObjNumber implements Obj {
   val: bigint;
 
-  constructor(num: bigint) {
+  isConstant: boolean;
+
+  constructor(num: bigint, isConstant: boolean = false) {
     this.val = num;
+    this.isConstant = isConstant;
   }
 
   asString(): string {

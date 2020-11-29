@@ -3,13 +3,21 @@ import Obj from './Obj';
 class ObjArray implements Obj {
   val: Array<Obj>;
 
+  isConstant: boolean;
+
   constructor(values: Array<Obj>) {
     this.val = values;
+    this.isConstant = true;
   }
 
-  set(index: bigint, value: Obj) {
+  set(index: bigint, value: Obj): boolean {
+    // @ts-ignore
+    if (this.val[index].isConstant === true) {
+      return false;
+    }
     // @ts-ignore
     this.val[index] = value;
+    return true;
   }
 
   get(index: bigint|number): Obj {

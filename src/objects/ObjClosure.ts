@@ -5,10 +5,13 @@ import ObjUpValue from './ObjUpValue';
 class ObjClosure implements Obj {
   func: ObjFunction;
 
+  isConstant: boolean;
+
   upvalues: Array<ObjUpValue>;
 
-  constructor(func: ObjFunction) {
+  constructor(func: ObjFunction, isConstant: boolean = false) {
     this.func = func;
+    this.isConstant = isConstant;
 
     this.upvalues = [];
 

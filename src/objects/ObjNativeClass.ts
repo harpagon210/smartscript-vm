@@ -5,10 +5,13 @@ import ObjInstance from './ObjInstance';
 class ObjNativeClass implements Obj {
   name: string;
 
+  isConstant: boolean;
+
   methods: Map<string, Function>;
 
-  constructor(name: string) {
+  constructor(name: string, isConstant: boolean = false) {
     this.name = name;
+    this.isConstant = isConstant;
     this.methods = new Map();
   }
 

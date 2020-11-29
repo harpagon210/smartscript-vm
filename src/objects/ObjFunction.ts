@@ -11,11 +11,14 @@ class ObjFunction implements Obj {
 
   arity: number;
 
-  constructor(name?: string) {
+  isConstant: boolean;
+
+  constructor(name?: string, isConstant: boolean = false) {
     this.name = name;
     this.upvalues = [];
     this.chunk = new Chunk();
     this.arity = 0;
+    this.isConstant = isConstant;
   }
 
   asString(): string {

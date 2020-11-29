@@ -1,4 +1,3 @@
-const fs = require('fs');
 const { VM, InterpretResult, ObjNativeClass, ObjInstance, ObjString, ObjNumber, MapClass } = require('../dist/index');
 
 process.env.DEBUG_TRACE_EXECUTION = 'tru';
@@ -6,40 +5,41 @@ process.env.DEBUG_PRINT_CODE = 'tru';
 process.env.BENCHMARK = 'tru';
 
 async function run() {
-  const argv = process.argv.slice(2);
-  if (argv.length === 1) {
     const vm = new VM();
 
-    const ApiClass = new ObjNativeClass('Api');
+    const ApiClass = new ObjNativeClass('Api', true);
 
     ApiClass.asStringNative = () => 'API';
-    const apiInstance = new ObjInstance(ApiClass);
-    apiInstance.setField('sender', new ObjString('Harpagon'));
-    apiInstance.setField('action', new ObjString('testAction'));
-    const params = new ObjInstance(MapClass);
-    params.setField('nb', new ObjNumber(3n));
+    const apiInstance = new ObjInstance(ApiClass, true);
+    apiInstance.setField('sender', new ObjString('Harpagon', true));
+    apiInstance.setField('action', new ObjString('testAction', true));
+    const params = new ObjInstance(MapClass, true);
+    params.setField('nb', new ObjNumber(3n, true));
     apiInstance.setField('params', params);
 
     vm.setGlobal('Api', apiInstance);
 
-    const source = fs.readFileSync(argv[0]).toString();
+    const source = `
+    print(Api.sender);
+    Api.sender = 'me';
+    print(Api.sender);
+    `;
 
-    const func = VM.compile(source);
+    let result = VM.compile(source);
 
-    if (!func) {
+    if (!result.result === InterpretResult.InterpretCompileError) {
+      console.error(result.errors);
       process.exit(65);
     }
 
-    const result = await vm.interpret(func);
+    result = await vm.interpret(result.func);
 
-    if (result === InterpretResult.InterpretCompileError) process.exit(65);
-    if (result === InterpretResult.InterpretRuntimeError) process.exit(70);
+    if (result.result === InterpretResult.InterpretRuntimeError) {
+      console.error(result.errors);
+      process.exit(70);
+    }
 
     process.exit();
-  } else {
-    console.error('Usage: node index.js [path]');
-    process.exit(64);
-  }
 }
 
 run();

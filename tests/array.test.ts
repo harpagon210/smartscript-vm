@@ -1,4 +1,4 @@
-import { VM, ObjNull, ObjNativeFunction, ObjInstance, ObjArray, ObjNumber, ArrayClass, MapClass, ObjString, InterpretResult } from "../src";
+import { VM, ObjNull, ObjNativeFunction, ObjInstance, ObjArray, ObjNumber, ArrayClass, MapClass, ObjString, InterpretResult, ObjBool } from "../src";
 
 describe('array', () => {
 
@@ -117,6 +117,22 @@ describe('array', () => {
     expect(result.errors).toEqual(`runtime exception: Out of bound 1.
 [line 2] in main script`);
 
+  })
+
+  it('cannot reassing const in array', async () => {
+    let vm = new VM();
+
+    vm.setGlobal('testBool', new ObjBool(true, true));
+
+    let result = await vm.interpret(`
+      const a = [];
+      a.push(testBool);
+      a[0] = 1;
+    `)
+
+    expect(result.result).toEqual(InterpretResult.InterpretRuntimeError);
+    expect(result.errors).toEqual(`runtime exception: cannot reassign const at index 0
+[line 3] in main script`);
   })
 
   it('should push a value', async () => {
@@ -426,5 +442,20 @@ describe('array', () => {
 
     expect(result).toBeFalsy();
     expect(vm.errors).toEqual('runtime exception: Index testIndex is not number.');
+  })
+
+  it('should only print ObjArray', async () => {
+    const result = ArrayClass.asStringNative(new ObjInstance(MapClass));
+    expect(result).toEqual('Array [  ]');
+  })
+
+  it('should not reassign array prop', async () => {
+    let vm = new VM();
+    const instance = new ObjInstance(ArrayClass);
+    const ctorMethod = ArrayClass.getMethod('constructor');
+    vm.stack.push(instance);
+    ctorMethod(vm, 0);
+    const result = instance.setField('array', new ObjBool(false));
+    expect(result.error).toBeTruthy();
   })
 })

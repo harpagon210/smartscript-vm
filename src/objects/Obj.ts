@@ -1,4 +1,5 @@
 interface Obj {
+  isConstant: boolean;
   asString(): string;
 }
 

@@ -4,10 +4,13 @@ import ObjClosure from './ObjClosure';
 class ObjClass implements Obj {
   name: string;
 
+  isConstant: boolean;
+
   methods: Map<string, ObjClosure>;
 
-  constructor(name: string) {
+  constructor(name: string, isConstant: boolean = false) {
     this.name = name;
+    this.isConstant = isConstant;
     this.methods = new Map();
   }
 

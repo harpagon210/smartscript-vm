@@ -177,12 +177,10 @@ describe('compiler', () => {
     let t2 = { a: 1, b: 2 };
     t2['a'] = t2['b'];
   `)
-
     expect(interpretRes.result).toEqual(InterpretResult.InterpretRuntimeOk);
 
     vm = new VM();
     interpretRes = await vm.interpret('1 + 1')
-
     expect(interpretRes.result).toEqual(InterpretResult.InterpretCompileError);
   })
 })

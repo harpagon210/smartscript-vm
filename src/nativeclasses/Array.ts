@@ -58,7 +58,11 @@ ArrayClass.setMethod('set', (vm: VM, argCount: number, index: Obj, value: Obj) =
         return false;
       }
 
-      array.set(arrIndexNum, value);
+      if (!array.set(arrIndexNum, value)) {
+        vm.runtimeError(`cannot reassign const at index ${arrIndexNum}`);
+        return false;
+      }
+
       return new ObjNull();
     }
     vm.runtimeError('array is not an instance of ObjArray');

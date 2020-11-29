@@ -84,7 +84,7 @@ class VM {
   }
 
   async interpret(source: string | ObjFunction, availableGas: number = 0):
-  Promise<{ result: InterpretResult, errors: string, gasUsed: number }> {
+    Promise<{ result: InterpretResult, errors: string, gasUsed: number }> {
     this.remainingGas = availableGas;
     let func: ObjFunction;
     let compilationResult = null;
@@ -162,10 +162,16 @@ class VM {
     return this.stack.pop();
   }
 
-  public setGlobal(key: string, obj: Obj): boolean {
-    const isNewKey = !this.globals.has(key);
+  public setGlobal(key: string, obj: Obj): { isNewKey: boolean, error: boolean } {
+    const originalObj = this.globals.get(key);
+    const isNewKey = originalObj === undefined;
+
+    if (originalObj && originalObj.isConstant === true) {
+      return { isNewKey, error: true };
+    }
+
     this.globals.set(key, obj);
-    return isNewKey;
+    return { isNewKey, error: false };
   }
 
   public getGlobal(key: string): Obj {
@@ -526,7 +532,14 @@ class VM {
         }
         case OpCode.OpSetGlobal: {
           const name = frame.readConstant() as ObjString;
-          if (this.setGlobal(name.val, this.peek(0))) {
+          const result = this.setGlobal(name.val, this.peek(0));
+
+          if (result.error === true) {
+            this.runtimeError(`Cannot reassing const ${name.asString()}`);
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
+          }
+
+          if (result.isNewKey === true) {
             this.globals.delete(name.val);
             this.runtimeError(`Undefined variable ${name.val}`);
             return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
@@ -546,9 +559,17 @@ class VM {
           const slot = frame.readByte();
 
           if (frame.closure.upvalues[slot].closed) {
-            frame.closure.upvalues[slot].closed = this.peek(0);
-          } else {
+            if (frame.closure.upvalues[slot].closed.isConstant === false) {
+              frame.closure.upvalues[slot].closed = this.peek(0);
+            } else {
+              this.runtimeError(`Cannot reassing const ${frame.closure.upvalues[slot].closed.asString()}`);
+              return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
+            }
+          } else if (this.stack[frame.closure.upvalues[slot].location].isConstant === false) {
             this.stack[frame.closure.upvalues[slot].location] = this.peek(0);
+          } else {
+            this.runtimeError(`Cannot reassing const ${this.stack[frame.closure.upvalues[slot].location].asString()}`);
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           break;
         }
@@ -578,8 +599,13 @@ class VM {
             return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
           }
           const instance = this.peek(1) as ObjInstance;
+          const prop = (frame.readConstant() as ObjString).val;
+          const result = instance.setField(prop, this.peek(0));
 
-          instance.setField((frame.readConstant() as ObjString).val, this.peek(0));
+          if (result.error === true) {
+            this.runtimeError(`Cannot reassing const ${prop}`);
+            return this.buildInterpretResult(InterpretResult.InterpretRuntimeError);
+          }
 
           const value = this.pop();
           this.pop();
@@ -881,7 +907,7 @@ class VM {
           }
 
           const arrayNativeClass = this.getGlobal('Array') as ObjNativeClass;
-          const array = new ObjInstance(arrayNativeClass);
+          const array = new ObjInstance(arrayNativeClass, true);
           array.setField('array', new ObjArray(arr));
 
           this.push(array);

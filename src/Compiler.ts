@@ -165,7 +165,6 @@ class Compiler {
 
     for (; ;) {
       this.parser.current = this.scanner.scanToken();
-      // console.log('advance', this.parser.current);
       if (this.parser.current.type !== TokenType.TokenError) break;
 
       this.errorAtCurrent(this.parser.current.lexeme);

@@ -5,9 +5,12 @@ class ObjNativeFunction implements Obj {
 
   name: string;
 
-  constructor(func: Function, name: string) {
+  isConstant: boolean;
+
+  constructor(func: Function, name: string, isConstant: boolean = false) {
     this.func = func;
     this.name = name;
+    this.isConstant = isConstant;
   }
 
   asString(): string {

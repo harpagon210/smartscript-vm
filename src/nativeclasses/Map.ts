@@ -6,7 +6,7 @@ import ObjNull from '../objects/ObjNull';
 // eslint-disable-next-line import/no-cycle
 import VM from '../VM';
 
-const MapClass = new ObjNativeClass('Map');
+const MapClass = new ObjNativeClass('Map', true);
 
 MapClass.asStringNative = (instance: ObjInstance) => {
   let output: string = 'Map { ';

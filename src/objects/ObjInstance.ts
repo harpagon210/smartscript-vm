@@ -8,9 +8,12 @@ class ObjInstance implements Obj {
 
   fields: Map<string, Obj>;
 
-  constructor(klass: ObjClass | ObjNativeClass) {
+  isConstant: boolean;
+
+  constructor(klass: ObjClass | ObjNativeClass, isConstant: boolean = false) {
     this.klass = klass;
     this.fields = new Map();
+    this.isConstant = isConstant;
   }
 
   asString(): string {
@@ -28,10 +31,15 @@ class ObjInstance implements Obj {
     return this.fields.delete(key);
   }
 
-  setField(key: string, value: Obj): boolean {
-    const isNewKey = !this.fields.has(key);
+  setField(key: string, value: Obj): { isNewKey: boolean, error: boolean } {
+    const originalObj = this.fields.get(key);
+    const isNewKey = originalObj === undefined;
+
+    if (originalObj && originalObj.isConstant === true) {
+      return { isNewKey, error: true };
+    }
     this.fields.set(key, value);
-    return isNewKey;
+    return { isNewKey, error: false };
   }
 }
 
