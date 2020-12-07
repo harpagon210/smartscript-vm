@@ -21,13 +21,25 @@ async function run() {
 
     const source = `
     print(Api.sender);
-    Api.sender = 'me';
+    //Api.sender = 'me';
     print(Api.sender);
+
+    {
+      let b = Api;
+
+      function test () {
+        return b;
+      }
+      test().sender = 'test';
+      print(test().sender);
+    }
+
+   
     `;
 
     let result = VM.compile(source);
 
-    if (!result.result === InterpretResult.InterpretCompileError) {
+    if (result.result === InterpretResult.InterpretCompileError) {
       console.error(result.errors);
       process.exit(65);
     }

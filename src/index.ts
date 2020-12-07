@@ -1,5 +1,6 @@
 import VM from './VM';
 import InterpretResult from './InterpretResult';
+import ObjFunction from './objects/ObjFunction';
 import ObjArray from './objects/ObjArray';
 import ObjBool from './objects/ObjBool';
 import ObjNativeClass from './objects/ObjNativeClass';
@@ -14,6 +15,7 @@ import OpCode from './OpCode';
 
 export {
   VM, InterpretResult,
-  ObjArray, ObjBool, ObjNativeClass, ObjNativeFunction, ObjNull, ObjNumber, ObjInstance, ObjString,
+  ObjFunction, ObjArray, ObjBool, ObjNativeClass,
+  ObjNativeFunction, ObjNull, ObjNumber, ObjInstance, ObjString,
   ArrayClass, MapClass, OpCode,
 };
