@@ -27,7 +27,7 @@ class ObjFunction implements Obj {
     return `<function ${this.name}>`;
   }
 
-  serialize() {
+  public serialize() {
     const serializedFunction: any = {};
     serializedFunction.name = this.name;
     serializedFunction.arity = this.arity;
@@ -58,7 +58,7 @@ class ObjFunction implements Obj {
     return serializedFunction;
   }
 
-  static deserialize(serializedFunction: any) {
+  public static deserialize(serializedFunction: any) {
     const objFunction = new ObjFunction();
     objFunction.name = serializedFunction.name;
     objFunction.arity = serializedFunction.arity;
