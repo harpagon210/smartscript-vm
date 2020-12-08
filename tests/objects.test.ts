@@ -1,4 +1,4 @@
-import { ObjBool, ObjNativeFunction, ObjNull, ObjNumber, ObjString, VM } from "../src";
+import { ObjBool, ObjFunction, ObjNativeFunction, ObjNull, ObjNumber, ObjString, VM } from "../src";
 
 describe('objects', () => {
   it('should create an ObjBool true', async () => {
@@ -172,5 +172,145 @@ describe('objects', () => {
     `)
 
     expect(result).toEqual(new ObjNumber(1n));
+  })
+
+  it('should serialize and deserialize an ObjFunction', async () => {
+    let compileResult = VM.compile(`
+      const a = 1;
+      const b = true;
+      const c = "test";
+      const d = null;
+
+      function testFunction () {
+        return 1;
+      }
+    `);
+
+    let serializedFunction = compileResult.func.serialize();
+    expect(serializedFunction.name).toEqual(undefined);
+    expect(serializedFunction.arity).toEqual(0);
+    expect(serializedFunction.isConstant).toEqual(false);
+    expect(serializedFunction.upvalues).toEqual([]);
+    expect(serializedFunction.lines).toEqual([
+      1, 1, 1, 1, 2, 2, 2,
+      3, 3, 3, 3, 4, 4, 4,
+      8, 8, 8, 8, 9, 9
+    ]);
+    expect(serializedFunction.code).toEqual([
+      0, 1, 16, 0, 2, 16, 2,
+      0, 4, 16, 3, 1, 16, 5,
+      25, 7, 16, 6, 1, 14
+    ]);
+
+    expect(serializedFunction.constants).toEqual([
+      { type: 'ObjString', value: 'a', isConstant: false },
+      { type: 'ObjNumber', value: '1', isConstant: false },
+      { type: 'ObjString', value: 'b', isConstant: false },
+      { type: 'ObjString', value: 'c', isConstant: false },
+      { type: 'ObjString', value: 'test', isConstant: false },
+      { type: 'ObjString', value: 'd', isConstant: false },
+      { type: 'ObjString', value: 'testFunction', isConstant: false },
+      {
+        type: 'ObjFunction', value: {
+          name: 'testFunction',
+          arity: 0,
+          isConstant: false,
+          upvalues: [],
+          lines: [7, 7, 7, 8, 8],
+          code: [0, 0, 14, 1, 14],
+          constants: [
+            { type: 'ObjNumber', value: '1', isConstant: false }
+          ]
+        }, isConstant: false
+      }
+    ]);
+
+    const vm = new VM();
+
+    let results: any = new Array();
+    const setResultsFn = () => {
+      results.push(vm.pop());
+      return new ObjNull();
+    };
+    vm.setGlobal('setResults', new ObjNativeFunction(setResultsFn, 'setResults'));
+
+    compileResult = VM.compile(`
+      setResults(1+1);
+      setResults("1"+"1");
+
+      function test () {
+        return 3 + 4;
+      }
+
+      setResults(test());
+    `);
+
+    serializedFunction = compileResult.func.serialize();
+
+    const deserializedFunction = ObjFunction.deserialize(serializedFunction);
+
+    await vm.interpret(deserializedFunction)
+
+    expect(results[0]).toEqual(new ObjNumber(2n));
+    expect(results[1]).toEqual(new ObjString("11"));
+    expect(results[2]).toEqual(new ObjNumber(7n));
+
+    compileResult = VM.compile(`
+      {
+        let a = 1;
+        function f() {
+          a = 3;
+        }
+      }
+    `);
+
+    serializedFunction = compileResult.func.serialize();
+
+    expect(serializedFunction.constants[1].type).toEqual('ObjFunction');
+    expect(serializedFunction.constants[1].value).toEqual({
+      name: 'f',
+      arity: 0,
+      isConstant: false,
+      upvalues: [{ index: 1, isLocal: true }],
+      lines: [
+        4, 4, 4, 4,
+        4, 5, 5
+      ],
+      code: [
+        0, 0, 27, 0,
+        15, 1, 14
+      ],
+      constants: [{ type: 'ObjNumber', value: '3', isConstant: false }]
+    });
+
+    const deserializedFn = ObjFunction.deserialize(serializedFunction);
+
+    expect(deserializedFn.chunk.constants[1] instanceof ObjFunction).toBeTruthy();
+
+    compileResult = VM.compile(`
+      const a = 1;
+    `);
+
+    try {
+      compileResult.func.chunk.constants[0] = new ObjBool(true);
+
+      serializedFunction = compileResult.func.serialize();
+    } catch (error) {
+      expect(error.message).toEqual('type ObjBool not supported in ObjFunction serialize method.');
+    }
+
+    compileResult = VM.compile(`
+      const a = 1;
+    `);
+
+    try {
+      serializedFunction = compileResult.func.serialize();
+      serializedFunction.constants[0].type = 'ObjBool'
+
+      ObjFunction.deserialize(serializedFunction);
+
+    } catch (error) {
+      expect(error.message).toEqual('type ObjBool not supported in ObjFunction deserialize method.');
+    }
   })
 })
